@@ -1,0 +1,71 @@
+---
+#
+# This is the canonical configuration for the `README.md`
+# Run `make readme` to rebuild the `README.md`
+#
+
+# Name of this project
+name : Terraform AZURE KUBERNETES SERVICE
+
+# License of this project
+license: "APACHE"
+
+# Canonical GitHub repo
+github_repo: clouddrove/terraform-azure-aks
+
+# Badges to display
+badges:
+  - name: "Terraform"
+    image: "https://img.shields.io/badge/Terraform-v1.1.7-green"
+    url: "https://www.terraform.io"
+  - name: "Licence"
+    image: "https://img.shields.io/badge/License-APACHE-blue.svg"
+    url: "LICENSE.md"
+
+#  description of this project
+description: |-
+  Terraform module to create Azure kubernetes service resource on AZURE.
+# extra content
+include:
+  - "terraform.md"
+
+# How to use this project
+# How to use this project
+usage: |-
+  Here are some examples of how you can use this module in your inventory structure:
+  ### azure aks
+  ```hcl
+    # Basic
+    module "aks" {
+  source      = ""clouddrove/vnet/aks""
+  name                 = "app"
+  environment          = "test"
+  label_order          = ["name", "environment"]
+
+  resource_group_name = module.resource_group.resource_group_name
+  location            = module.resource_group.resource_group_location
+
+  #networking
+  service_cidr            = "10.0.0.0/16"
+  docker_bridge_cidr      = "172.17.0.1/16"
+  kubernetes_version      = "1.24.3"
+  vnet_id                 = join("", module.vnet.vnet_id)
+  nodes_subnet_id         = module.subnet.default_subnet_id[0]
+  private_cluster_enabled = true
+  enable_azure_policy     = false
+
+  #azurerm_disk_encryption_set = false   ## Default Encryption at-rest with a platform-managed key
+  #key_vault_id      = module.vault.id   
+
+  default_node_pool = {
+  max_pods              = 200
+  os_disk_size_gb       = 64
+  vm_size               = "Standard_B2s"
+  count                 = 1
+  enable_node_public_ip = false
+  }
+  }
+    ```
+
+
+
