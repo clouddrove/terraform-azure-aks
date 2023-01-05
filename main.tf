@@ -109,7 +109,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
       log_analytics_workspace_id = var.log_analytics_workspace_id
     }
   }
-   
+
   dynamic "oms_agent" {
     for_each = var.log_analytics_workspace_enabled ? ["oms_agent"] : []
 
@@ -122,7 +122,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
     type = var.private_cluster_enabled && var.private_dns_zone_type == "Custom" ? "UserAssigned" : "SystemAssigned"
   }
 
- 
+
   dynamic "linux_profile" {
     for_each = var.linux_profile != null ? [true] : []
     iterator = lp
@@ -210,7 +210,7 @@ resource "azurerm_role_assignment" "aks_uai_vnet_network_contributor" {
 }
 
 resource "azurerm_key_vault_key" "example" {
-  count        =  var.enabled && var.azurerm_disk_encryption_set ? 1 : 0
+  count        = var.enabled && var.azurerm_disk_encryption_set ? 1 : 0
   name         = format("aks-%s-vault-key", module.labels.id)
   key_vault_id = var.key_vault_id
   key_type     = "RSA"
@@ -269,7 +269,7 @@ resource "azurerm_key_vault_access_policy" "key_vault" {
 }
 
 resource "azurerm_key_vault_access_policy" "kubelet_identity" {
-  count = var.enabled && var.azurerm_disk_encryption_set? 1 : 0
+  count = var.enabled && var.azurerm_disk_encryption_set ? 1 : 0
 
   key_vault_id = var.key_vault_id
 

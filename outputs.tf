@@ -14,7 +14,7 @@ output "kube_config_raw" {
 }
 
 output "aks_system_identity_principal_id" {
-  value  = azurerm_kubernetes_cluster.aks[0].identity[0].principal_id
+  value       = azurerm_kubernetes_cluster.aks[0].identity[0].principal_id
   description = "Content aks system identity's object id"
 }
 

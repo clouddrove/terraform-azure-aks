@@ -280,8 +280,8 @@ variable "network_policy" {
 }
 
 variable "azurerm_disk_encryption_set" {
-  type = bool
-  default = false
+  type        = bool
+  default     = false
   description = "The enable the Disk Encryption Set which should be used for the Nodes and Volumes. M"
 }
 

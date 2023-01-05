@@ -26,7 +26,7 @@ module "vnet" {
 }
 
 module "subnet" {
-  source               = "clouddrove/subnet/azure"
+  source  = "clouddrove/subnet/azure"
   version = "1.0.0"
 
   name                 = "app"
@@ -54,9 +54,9 @@ module "subnet" {
 
 module "aks" {
   source      = "./../"
-  name                 = "app"
-  environment          = "test"
-  label_order          = ["name", "environment"]
+  name        = "app"
+  environment = "test"
+  label_order = ["name", "environment"]
 
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
@@ -74,10 +74,10 @@ module "aks" {
   #key_vault_id      = module.vault.id   
 
   default_node_pool = {
-  max_pods              = 200
-  os_disk_size_gb       = 64
-  vm_size               = "Standard_B2s"
-  count                 = 1
-  enable_node_public_ip = false
-}
+    max_pods              = 200
+    os_disk_size_gb       = 64
+    vm_size               = "Standard_B2s"
+    count                 = 1
+    enable_node_public_ip = false
   }
+}
