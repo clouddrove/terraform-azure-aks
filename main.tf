@@ -178,7 +178,7 @@ resource "azurerm_role_assignment" "aks_system_identity" {
 }
 
 # Allow aks system indentiy access to ACR
-resource "azurerm_role_assignment" "aks_system_identity" {
+resource "azurerm_role_assignment" "aks_acr_access" {
   count                = var.enabled && var.acr_enabled ? 1 : 0
   principal_id         = azurerm_kubernetes_cluster.aks[0].identity[0].principal_id
   scope                = var.acr_id
