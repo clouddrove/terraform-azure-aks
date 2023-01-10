@@ -59,7 +59,7 @@ module "labels" {
 
 resource "azurerm_kubernetes_cluster" "aks" {
   count                            = var.enabled ? 1 : 0
-  name                             = format("aks-%s", module.labels.id)
+  name                             = format("%s-aks", module.labels.id)
   location                         = local.location
   resource_group_name              = local.resource_group_name
   dns_prefix                       = replace(module.labels.id, "/[\\W_]/", "-")
