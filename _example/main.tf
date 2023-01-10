@@ -70,6 +70,10 @@ module "aks" {
   private_cluster_enabled = true
   enable_azure_policy     = true
 
+  # ACR access 
+  acr_enabled = false
+  acr_id      = ""
+
   #azurerm_disk_encryption_set = false   ## Default Encryption at-rest with a platform-managed key
   #key_vault_id      = module.vault.id   
 

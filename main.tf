@@ -177,6 +177,15 @@ resource "azurerm_role_assignment" "aks_system_identity" {
   role_definition_name = "Contributor"
 }
 
+# Allow aks system indentiy access to ACR
+resource "azurerm_role_assignment" "aks_system_identity" {
+  count                = var.enabled && var.acr_enabled ? 1 : 0
+  principal_id         = azurerm_kubernetes_cluster.aks[0].identity[0].principal_id
+  scope                = var.acr_id
+  role_definition_name = "Contributor"
+}
+
+
 # Allow user assigned identity to manage AKS items in MC_xxx RG
 resource "azurerm_role_assignment" "aks_user_assigned" {
   count                = var.enabled ? 1 : 0

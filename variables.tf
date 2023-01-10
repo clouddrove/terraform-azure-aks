@@ -285,6 +285,18 @@ variable "azurerm_disk_encryption_set" {
   description = "The enable the Disk Encryption Set which should be used for the Nodes and Volumes. M"
 }
 
+variable "acr_enabled" {
+  type        = bool
+  default     = false
+  description = "The enable and disable the acr access for aks"
+}
+
+variable "acr_id" {
+  type = string
+  default = ""
+  description = "azure container resource id to provide access for aks"
+}
+
 variable "key_vault_id" {
   type        = string
   default     = ""
