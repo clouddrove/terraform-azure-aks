@@ -112,6 +112,8 @@ enable_node_public_ip = false
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| acr\_enabled | The enable and disable the acr access for aks | `bool` | `false` | no |
+| acr\_id | azure container resource id to provide access for aks | `string` | `""` | no |
 | aks\_sku\_tier | aks sku tier. Possible values are Free ou Paid | `string` | `"Free"` | no |
 | api\_server\_authorized\_ip\_ranges | Ip ranges allowed to interract with Kubernetes API. Default no restrictions | `list(string)` | `[]` | no |
 | attributes | Additional attributes (e.g. `1`). | `list(any)` | `[]` | no |
