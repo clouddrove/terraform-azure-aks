@@ -182,7 +182,14 @@ resource "azurerm_role_assignment" "aks_acr_access" {
   count                = var.enabled && var.acr_enabled ? 1 : 0
   principal_id         = azurerm_kubernetes_cluster.aks[0].identity[0].principal_id
   scope                = var.acr_id
-  role_definition_name = "Contributor"
+  role_definition_name = "AcrPull"
+}
+
+resource "azurerm_role_assignment" "aks_acr_access" {
+  count                = var.enabled && var.acr_enabled ? 1 : 0
+  principal_id         = azurerm_kubernetes_cluster.aks[0].kubelet_identity[0].object_id
+  scope                = var.acr_id
+  role_definition_name = "AcrPull"
 }
 
 
