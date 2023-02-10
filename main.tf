@@ -253,6 +253,13 @@ resource "azurerm_disk_encryption_set" "main" {
   }
 }
 
+resource "azurerm_role_assignment" "azurerm_disk_encryption_set_key_vault_access" {
+  count                = var.enabled && var.azurerm_disk_encryption_set ? 1 : 0
+  principal_id         = azurerm_disk_encryption_set.main[0].identity.0.principal_id
+  scope                = var.key_vault_id
+  role_definition_name = "Key Vault Crypto Service Encryption User"
+}
+
 resource "azurerm_key_vault_access_policy" "main" {
   count = var.enabled && var.azurerm_disk_encryption_set ? 1 : 0
 
