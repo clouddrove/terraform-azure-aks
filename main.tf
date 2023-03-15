@@ -304,3 +304,173 @@ resource "azurerm_key_vault_access_policy" "kubelet_identity" {
   secret_permissions      = ["Get"]
 
 }
+
+resource "azurerm_monitor_diagnostic_setting" "aks_diag" {
+  count                          = var.diagnostic_setting_enable ? 1 : 0
+  name                           = format("%s-aks-diagnostic-log", module.labels.id)
+  target_resource_id             = join("", azurerm_kubernetes_cluster.aks.*.id)
+  storage_account_id             = var.storage_account_id
+  eventhub_name                  = var.eventhub_name
+  eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
+  log_analytics_workspace_id     = var.log_analytics_workspace_id
+  log_analytics_destination_type = var.log_analytics_destination_type
+
+  dynamic "log" {
+    for_each = var.aks_logs_category
+    content {
+      category = log.value
+      enabled  = true
+      retention_policy {
+        days    = var.days
+        enabled = var.retention_policy_enabled
+      }
+    }
+  }
+
+  metric {
+    category = "AllMetrics"
+    enabled  = true
+
+    retention_policy {
+      enabled = var.retention_policy_enabled
+      days    = var.days
+    }
+  }
+  lifecycle {
+    ignore_changes = [log_analytics_destination_type]
+  }
+}
+
+
+data "azurerm_resources" "spokes" {
+  depends_on = [azurerm_kubernetes_cluster.aks]
+  type       = "Microsoft.Network/publicIPAddresses"
+}
+
+resource "azurerm_monitor_diagnostic_setting" "pip_aks" {
+  depends_on                     = [data.azurerm_resources.spokes]
+  count                          = var.diagnostic_setting_enable ? 1 : 0
+  name                           = format("%s-aks-pip-diagnostic-log", module.labels.id)
+  target_resource_id             = join("", data.azurerm_resources.spokes.resources.*.id)
+  storage_account_id             = var.storage_account_id
+  eventhub_name                  = var.eventhub_name
+  eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
+  log_analytics_workspace_id     = var.log_analytics_workspace_id
+  log_analytics_destination_type = var.log_analytics_destination_type
+  metric {
+    category = "AllMetrics"
+    enabled  = var.Metric_enable
+    retention_policy {
+      enabled = var.retention_policy_enabled
+      days    = var.diagnostic_log_days
+    }
+  }
+  log {
+    category       = var.category
+    category_group = "AllLogs"
+    retention_policy {
+      enabled = var.retention_policy_enabled
+      days    = var.diagnostic_log_days
+    }
+    enabled = var.log_enabled
+  }
+
+  log {
+    category       = var.category
+    category_group = "Audit"
+    retention_policy {
+      enabled = var.retention_policy_enabled
+      days    = var.diagnostic_log_days
+    }
+    enabled = var.log_enabled
+  }
+  lifecycle {
+    ignore_changes = [log_analytics_destination_type]
+  }
+}
+
+data "azurerm_resources" "spokes2" {
+  depends_on = [azurerm_kubernetes_cluster.aks]
+  type       = "Microsoft.Network/networkSecurityGroups"
+}
+
+resource "azurerm_monitor_diagnostic_setting" "aks-nsg" {
+  depends_on                     = [data.azurerm_resources.spokes2]
+  count                          = var.diagnostic_setting_enable ? 1 : 0
+  name                           = format("%s-aks-nsg-diagnostic-log", module.labels.id)
+  target_resource_id             = join("", data.azurerm_resources.spokes2.resources.*.id)
+  storage_account_id             = var.storage_account_id
+  eventhub_name                  = var.eventhub_name
+  eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
+  log_analytics_workspace_id     = var.log_analytics_workspace_id
+  log_analytics_destination_type = var.log_analytics_destination_type
+  log {
+    category       = var.category
+    category_group = "AllLogs"
+    retention_policy {
+      enabled = var.retention_policy_enabled
+      days    = var.diagnostic_log_days
+    }
+    enabled = var.log_enabled
+  }
+
+  lifecycle {
+    ignore_changes = [log_analytics_destination_type]
+  }
+}
+
+data "azurerm_resources" "spokes3" {
+  depends_on = [azurerm_kubernetes_cluster.aks]
+  type       = "Microsoft.Network/networkInterfaces"
+}
+
+resource "azurerm_monitor_diagnostic_setting" "aks-nic" {
+  depends_on                     = [data.azurerm_resources.spokes3]
+  count                          = var.diagnostic_setting_enable ? 1 : 0
+  name                           = format("%s-aks-nic-diagnostic-log", module.labels.id)
+  target_resource_id             = join("", data.azurerm_resources.spokes3.resources.*.id)
+  storage_account_id             = var.storage_account_id
+  eventhub_name                  = var.eventhub_name
+  eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
+  log_analytics_workspace_id     = var.log_analytics_workspace_id
+  log_analytics_destination_type = var.log_analytics_destination_type
+  metric {
+    category = "AllMetrics"
+    enabled  = var.Metric_enable
+    retention_policy {
+      enabled = var.retention_policy_enabled
+      days    = var.diagnostic_log_days
+    }
+  }
+  lifecycle {
+    ignore_changes = [log_analytics_destination_type]
+  }
+}
+
+data "azurerm_resources" "spokes4" {
+  depends_on = [azurerm_kubernetes_cluster.aks]
+  type       = "Microsoft.Network/loadBalancers"
+}
+
+resource "azurerm_monitor_diagnostic_setting" "aks-lb" {
+  depends_on                     = [data.azurerm_resources.spokes4]
+  count                          = var.diagnostic_setting_enable ? 1 : 0
+  name                           = format("%s-kubernetes-load-balancer-diagnostic-log", module.labels.id)
+  target_resource_id             = join("", data.azurerm_resources.spokes4.resources.*.id)
+  storage_account_id             = var.storage_account_id
+  eventhub_name                  = var.eventhub_name
+  eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
+  log_analytics_workspace_id     = var.log_analytics_workspace_id
+  log_analytics_destination_type = var.log_analytics_destination_type
+  metric {
+    category = "AllMetrics"
+    enabled  = var.Metric_enable
+    retention_policy {
+      enabled = var.retention_policy_enabled
+      days    = var.diagnostic_log_days
+    }
+  }
+  lifecycle {
+    ignore_changes = [log_analytics_destination_type]
+  }
+}

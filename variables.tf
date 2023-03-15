@@ -292,8 +292,8 @@ variable "acr_enabled" {
 }
 
 variable "acr_id" {
-  type = string
-  default = ""
+  type        = string
+  default     = ""
   description = "azure container resource id to provide access for aks"
 }
 
@@ -317,4 +317,89 @@ variable "role_based_access_control" {
     azure_rbac_enabled     = bool
   }))
   default = null
+}
+
+# Diagnosis Settings Enable
+variable "storage_account_id" {
+  type        = string
+  default     = null
+  description = "Storage account id to pass it to destination details of diagnosys setting of NSG."
+}
+
+variable "eventhub_name" {
+  type        = string
+  default     = null
+  description = "Eventhub Name to pass it to destination details of diagnosys setting of NSG."
+}
+
+variable "eventhub_authorization_rule_id" {
+  type        = string
+  default     = null
+  description = "Eventhub authorization rule id to pass it to destination details of diagnosys setting of NSG."
+}
+
+# variable "log_analytics_workspace_id" {
+#   type        = string
+#   default     = null
+#   description = "log analytics workspace id to pass it to destination details of diagnosys setting of NSG."
+# }
+
+variable "retention_policy_enabled" {
+  type        = bool
+  default     = false
+  description = "Set to false to prevent the module from creating retension policy for the diagnosys setting."
+}
+
+variable "days" {
+  type        = number
+  default     = 365
+  description = "Number of days to create retension policies for te diagnosys setting."
+}
+
+variable "aks_logs_category" {
+  type    = list(string)
+  default = ["kube-apiserver", "kube-audit", "cluster-autoscaler", "kube-controller-manager", "kube-scheduler", "cloud-controller-manager", "csi-azuredisk-controller", "csi-azurefile-controller", "csi-snapshot-controller", "guard", "kube-audit-admin", ]
+}
+
+
+variable "datastorages" {
+  type    = list(string)
+  default = null
+}
+
+#### enable diagnostic setting
+variable "log_analytics_destination_type" {
+  type        = string
+  default     = "AzureDiagnostics"
+  description = "Possible values are AzureDiagnostics and Dedicated, default to AzureDiagnostics. When set to Dedicated, logs sent to a Log Analytics workspace will go into resource specific tables, instead of the legacy AzureDiagnostics table."
+}
+
+variable "diagnostic_log_days" {
+  type        = number
+  default     = "90"
+  description = " The number of days for which this Retention Policy should apply."
+}
+variable "Metric_enable" {
+  type        = bool
+  default     = true
+  description = "Is this Diagnostic Metric enabled? Defaults to true."
+}
+variable "diagnostic_setting_enable" {
+  type    = bool
+  default = false
+}
+
+variable "category" {
+  type        = string
+  default     = null
+  description = " The name of a Diagnostic Log Category Group for this Resource."
+}
+variable "log_enabled" {
+  type        = string
+  default     = true
+  description = " Is this Diagnostic Log enabled? Defaults to true."
+}
+variable "target_resource_id" {
+  type    = string
+  default = ""
 }
