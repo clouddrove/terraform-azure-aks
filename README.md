@@ -73,33 +73,37 @@ Here are some examples of how you can use this module in your inventory structur
 ```hcl
   # Basic
   module "aks" {
-source      = ""clouddrove/vnet/aks""
-name                 = "app"
-environment          = "test"
-label_order          = ["name", "environment"]
+  source      = ""clouddrove/vnet/aks""
+  name                 = "app"
+  environment          = "test"
+  label_order          = ["name", "environment"]
 
-resource_group_name = module.resource_group.resource_group_name
-location            = module.resource_group.resource_group_location
+  resource_group_name = module.resource_group.resource_group_name
+  location            = module.resource_group.resource_group_location
 
-#networking
-service_cidr            = "10.0.0.0/16"
-docker_bridge_cidr      = "172.17.0.1/16"
-kubernetes_version      = "1.24.3"
-vnet_id                 = join("", module.vnet.vnet_id)
-nodes_subnet_id         = module.subnet.default_subnet_id[0]
-private_cluster_enabled = true
-enable_azure_policy     = false
+  #networking
+  service_cidr            = "10.0.0.0/16"
+  docker_bridge_cidr      = "172.17.0.1/16"
+  kubernetes_version      = "1.24.3"
+  vnet_id                 = join("", module.vnet.vnet_id)
+  nodes_subnet_id         = module.subnet.default_subnet_id[0]
+  private_cluster_enabled = true
+  enable_azure_policy     = false
 
-#azurerm_disk_encryption_set = false   ## Default Encryption at-rest with a platform-managed key
-#key_vault_id      = module.vault.id   
+  #azurerm_disk_encryption_set = false   ## Default Encryption at-rest with a platform-managed key
+  #key_vault_id      = module.vault.id
 
-default_node_pool = {
-max_pods              = 200
-os_disk_size_gb       = 64
-vm_size               = "Standard_B2s"
-count                 = 1
-enable_node_public_ip = false
-}
+  #### enable diagnostic setting when aks deployed.
+  diagnostic_setting_enable  = true
+  log_analytics_workspace_id = ""
+
+  default_node_pool = {
+  max_pods              = 200
+  os_disk_size_gb       = 64
+  vm_size               = "Standard_B2s"
+  count                 = 1
+  enable_node_public_ip = false
+  }
 }
   ```
 
@@ -112,14 +116,20 @@ enable_node_public_ip = false
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| Metric\_enable | Is this Diagnostic Metric enabled? Defaults to true. | `bool` | `true` | no |
 | acr\_enabled | The enable and disable the acr access for aks | `bool` | `false` | no |
 | acr\_id | azure container resource id to provide access for aks | `string` | `""` | no |
+| aks\_logs\_category | n/a | `list(string)` | <pre>[<br>  "kube-apiserver",<br>  "kube-audit",<br>  "cluster-autoscaler",<br>  "kube-controller-manager",<br>  "kube-scheduler",<br>  "cloud-controller-manager",<br>  "csi-azuredisk-controller",<br>  "csi-azurefile-controller",<br>  "csi-snapshot-controller",<br>  "guard",<br>  "kube-audit-admin"<br>]</pre> | no |
 | aks\_sku\_tier | aks sku tier. Possible values are Free ou Paid | `string` | `"Free"` | no |
 | api\_server\_authorized\_ip\_ranges | Ip ranges allowed to interract with Kubernetes API. Default no restrictions | `list(string)` | `[]` | no |
 | attributes | Additional attributes (e.g. `1`). | `list(any)` | `[]` | no |
 | azurerm\_disk\_encryption\_set | The enable the Disk Encryption Set which should be used for the Nodes and Volumes. M | `bool` | `false` | no |
+| category | The name of a Diagnostic Log Category Group for this Resource. | `string` | `null` | no |
+| days | Number of days to create retension policies for te diagnosys setting. | `number` | `365` | no |
 | default\_node\_pool | Default node pool configuration:<pre>map(object({<br>    name                  = string<br>    count                 = number<br>    vm_size               = string<br>    os_type               = string<br>    availability_zones    = list(number)<br>    enable_auto_scaling   = bool<br>    min_count             = number<br>    max_count             = number<br>    type                  = string<br>    node_taints           = list(string)<br>    vnet_subnet_id        = string<br>    max_pods              = number<br>    os_disk_type          = string<br>    os_disk_size_gb       = number<br>    enable_node_public_ip = bool<br>}))</pre> | `map(any)` | `{}` | no |
 | delimiter | Delimiter to be used between `organization`, `environment`, `name` and `attributes`. | `string` | `"-"` | no |
+| diagnostic\_log\_days | The number of days for which this Retention Policy should apply. | `number` | `"90"` | no |
+| diagnostic\_setting\_enable | n/a | `bool` | `false` | no |
 | docker\_bridge\_cidr | IP address for docker with Network CIDR. | `string` | `"172.16.0.1/16"` | no |
 | enable\_azure\_policy | Enable Azure Policy Addon. | `bool` | `false` | no |
 | enable\_http\_application\_routing | Enable HTTP Application Routing Addon (forces recreation). | `bool` | `false` | no |
@@ -128,6 +138,8 @@ enable_node_public_ip = false
 | enable\_pod\_security\_policy | Enable pod security policy or not. https://docs.microsoft.com/fr-fr/azure/AKS/use-pod-security-policies | `bool` | `false` | no |
 | enabled | Set to false to prevent the module from creating any resources. | `bool` | `true` | no |
 | environment | Environment (e.g. `prod`, `dev`, `staging`). | `string` | `""` | no |
+| eventhub\_authorization\_rule\_id | Eventhub authorization rule id to pass it to destination details of diagnosys setting of NSG. | `string` | `null` | no |
+| eventhub\_name | Eventhub Name to pass it to destination details of diagnosys setting of NSG. | `string` | `null` | no |
 | ingress\_application\_gateway\_id | The ID of the Application Gateway to integrate with the ingress controller of this Kubernetes Cluster. | `string` | `null` | no |
 | ingress\_application\_gateway\_name | The name of the Application Gateway to be used or created in the Nodepool Resource Group, which in turn will be integrated with the ingress controller of this Kubernetes Cluster. | `string` | `null` | no |
 | ingress\_application\_gateway\_subnet\_cidr | The subnet CIDR to be used to create an Application Gateway, which in turn will be integrated with the ingress controller of this Kubernetes Cluster. | `string` | `null` | no |
@@ -137,8 +149,10 @@ enable_node_public_ip = false
 | label\_order | Label order, e.g. `name`,`application`. | `list(any)` | `[]` | no |
 | linux\_profile | Username and ssh key for accessing AKS Linux nodes with ssh. | <pre>object({<br>    username = string,<br>    ssh_key  = string<br>  })</pre> | `null` | no |
 | location | Location where resource should be created. | `string` | `""` | no |
+| log\_analytics\_destination\_type | Possible values are AzureDiagnostics and Dedicated, default to AzureDiagnostics. When set to Dedicated, logs sent to a Log Analytics workspace will go into resource specific tables, instead of the legacy AzureDiagnostics table. | `string` | `"AzureDiagnostics"` | no |
 | log\_analytics\_workspace\_enabled | Enable log\_analytics\_workspace\_enabled(oms agent) Addon. | `bool` | `false` | no |
 | log\_analytics\_workspace\_id | The ID of log analytics | `string` | `""` | no |
+| log\_enabled | Is this Diagnostic Log enabled? Defaults to true. | `string` | `true` | no |
 | managedby | ManagedBy, eg 'CloudDrove'. | `string` | `"hello@clouddrove.com"` | no |
 | microsoft\_defender\_enabled | Enable microsoft\_defender\_enabled Addon. | `bool` | `false` | no |
 | microsoft\_defender\_workspace\_id | The default ID of log analytics | `string` | `""` | no |
@@ -154,9 +168,12 @@ enable_node_public_ip = false
 | private\_dns\_zone\_type | Set AKS private dns zone if needed and if private cluster is enabled (privatelink.<region>.azmk8s.io)<br>- "Custom" : You will have to deploy a private Dns Zone on your own and pass the id with <private\_dns\_zone\_id> variable<br>If this settings is used, aks user assigned identity will be "userassigned" instead of "systemassigned"<br>and the aks user must have "Private DNS Zone Contributor" role on the private DNS Zone<br>- "System" : AKS will manage the private zone and create it in the same resource group as the Node Resource Group<br>- "None" : In case of None you will need to bring your own DNS server and set up resolving, otherwise cluster will have issues after provisioning.<br>https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/kubernetes_cluster#private_dns_zone_id | `string` | `"System"` | no |
 | repository | Terraform current module repo | `string` | `"https://github.com/clouddrove/terraform-azure-subnet.git"` | no |
 | resource\_group\_name | A container that holds related resources for an Azure solution | `string` | `""` | no |
+| retention\_policy\_enabled | Set to false to prevent the module from creating retension policy for the diagnosys setting. | `bool` | `false` | no |
 | role\_based\_access\_control | n/a | <pre>list(object({<br>    managed                = bool<br>    tenant_id              = string<br>    admin_group_object_ids = list(string)<br>    azure_rbac_enabled     = bool<br>  }))</pre> | `null` | no |
 | service\_cidr | CIDR used by kubernetes services (kubectl get svc). | `string` | n/a | yes |
+| storage\_account\_id | Storage account id to pass it to destination details of diagnosys setting of NSG. | `string` | `null` | no |
 | tags | Additional tags (e.g. map(`BusinessUnit`,`XYZ`). | `map(any)` | `{}` | no |
+| target\_resource\_id | n/a | `string` | `""` | no |
 | vnet\_id | Vnet id that Aks MSI should be network contributor in a private cluster | `string` | `null` | no |
 
 ## Outputs
