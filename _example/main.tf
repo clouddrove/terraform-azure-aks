@@ -70,12 +70,12 @@ module "aks" {
   private_cluster_enabled = true
   enable_azure_policy     = true
 
-  # ACR access 
+  # ACR access
   acr_enabled = false
   acr_id      = ""
 
   #azurerm_disk_encryption_set = false   ## Default Encryption at-rest with a platform-managed key
-  #key_vault_id      = module.vault.id   
+  #key_vault_id      = module.vault.id
 
   default_node_pool = {
     max_pods              = 200
@@ -84,4 +84,9 @@ module "aks" {
     count                 = 1
     enable_node_public_ip = false
   }
+
+  #### enable diagnostic setting.
+  diagnostic_setting_enable  = false
+  log_analytics_workspace_id = ""
+
 }
