@@ -85,7 +85,7 @@ module "aks" {
     enable_node_public_ip = false
   }
 
-  #### enable diagnostic setting when aks deployed.
+  #### enable diagnostic setting.
   diagnostic_setting_enable  = false
   log_analytics_workspace_id = ""
 

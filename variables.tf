@@ -167,7 +167,8 @@ variable "linux_profile" {
 }
 
 variable "service_cidr" {
-  type        = string
+  type = string
+
   description = "CIDR used by kubernetes services (kubectl get svc)."
 }
 
@@ -338,12 +339,6 @@ variable "eventhub_authorization_rule_id" {
   description = "Eventhub authorization rule id to pass it to destination details of diagnosys setting of NSG."
 }
 
-# variable "log_analytics_workspace_id" {
-#   type        = string
-#   default     = null
-#   description = "log analytics workspace id to pass it to destination details of diagnosys setting of NSG."
-# }
-
 variable "retention_policy_enabled" {
   type        = bool
   default     = false
@@ -362,12 +357,7 @@ variable "aks_logs_category" {
 }
 
 
-variable "datastorages" {
-  type    = list(string)
-  default = null
-}
 
-#### enable diagnostic setting
 variable "log_analytics_destination_type" {
   type        = string
   default     = "AzureDiagnostics"

@@ -306,6 +306,7 @@ resource "azurerm_key_vault_access_policy" "kubelet_identity" {
 }
 
 resource "azurerm_monitor_diagnostic_setting" "aks_diag" {
+  depends_on                     = [azurerm_kubernetes_cluster.aks]
   count                          = var.diagnostic_setting_enable ? 1 : 0
   name                           = format("%s-aks-diagnostic-log", module.labels.id)
   target_resource_id             = join("", azurerm_kubernetes_cluster.aks.*.id)
@@ -342,16 +343,16 @@ resource "azurerm_monitor_diagnostic_setting" "aks_diag" {
 }
 
 
-data "azurerm_resources" "spokes" {
+data "azurerm_resources" "aks_pip" {
   depends_on = [azurerm_kubernetes_cluster.aks]
   type       = "Microsoft.Network/publicIPAddresses"
 }
 
 resource "azurerm_monitor_diagnostic_setting" "pip_aks" {
-  depends_on                     = [data.azurerm_resources.spokes]
+  depends_on                     = [data.azurerm_resources.aks_pip, azurerm_kubernetes_cluster.aks, azurerm_kubernetes_cluster_node_pool.node_pools]
   count                          = var.diagnostic_setting_enable ? 1 : 0
   name                           = format("%s-aks-pip-diagnostic-log", module.labels.id)
-  target_resource_id             = join("", data.azurerm_resources.spokes.resources.*.id)
+  target_resource_id             = join("", data.azurerm_resources.aks_pip.resources.*.id)
   storage_account_id             = var.storage_account_id
   eventhub_name                  = var.eventhub_name
   eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
@@ -389,16 +390,16 @@ resource "azurerm_monitor_diagnostic_setting" "pip_aks" {
   }
 }
 
-data "azurerm_resources" "spokes2" {
+data "azurerm_resources" "aks_nsg" {
   depends_on = [azurerm_kubernetes_cluster.aks]
   type       = "Microsoft.Network/networkSecurityGroups"
 }
 
 resource "azurerm_monitor_diagnostic_setting" "aks-nsg" {
-  depends_on                     = [data.azurerm_resources.spokes2]
+  depends_on                     = [data.azurerm_resources.aks_nsg, azurerm_kubernetes_cluster.aks]
   count                          = var.diagnostic_setting_enable ? 1 : 0
   name                           = format("%s-aks-nsg-diagnostic-log", module.labels.id)
-  target_resource_id             = join("", data.azurerm_resources.spokes2.resources.*.id)
+  target_resource_id             = join("", data.azurerm_resources.aks_nsg.resources.*.id)
   storage_account_id             = var.storage_account_id
   eventhub_name                  = var.eventhub_name
   eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
@@ -419,16 +420,16 @@ resource "azurerm_monitor_diagnostic_setting" "aks-nsg" {
   }
 }
 
-data "azurerm_resources" "spokes3" {
+data "azurerm_resources" "aks_nic" {
   depends_on = [azurerm_kubernetes_cluster.aks]
   type       = "Microsoft.Network/networkInterfaces"
 }
 
 resource "azurerm_monitor_diagnostic_setting" "aks-nic" {
-  depends_on                     = [data.azurerm_resources.spokes3]
+  depends_on                     = [data.azurerm_resources.aks_nic, azurerm_kubernetes_cluster.aks, azurerm_kubernetes_cluster_node_pool.node_pools]
   count                          = var.diagnostic_setting_enable ? 1 : 0
   name                           = format("%s-aks-nic-diagnostic-log", module.labels.id)
-  target_resource_id             = join("", data.azurerm_resources.spokes3.resources.*.id)
+  target_resource_id             = join("", data.azurerm_resources.aks_nic.resources.*.id)
   storage_account_id             = var.storage_account_id
   eventhub_name                  = var.eventhub_name
   eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
@@ -447,16 +448,16 @@ resource "azurerm_monitor_diagnostic_setting" "aks-nic" {
   }
 }
 
-data "azurerm_resources" "spokes4" {
+data "azurerm_resources" "aks_lb" {
   depends_on = [azurerm_kubernetes_cluster.aks]
   type       = "Microsoft.Network/loadBalancers"
 }
 
 resource "azurerm_monitor_diagnostic_setting" "aks-lb" {
-  depends_on                     = [data.azurerm_resources.spokes4]
+  depends_on                     = [data.azurerm_resources.aks_lb, azurerm_kubernetes_cluster.aks]
   count                          = var.diagnostic_setting_enable ? 1 : 0
   name                           = format("%s-kubernetes-load-balancer-diagnostic-log", module.labels.id)
-  target_resource_id             = join("", data.azurerm_resources.spokes4.resources.*.id)
+  target_resource_id             = join("", data.azurerm_resources.aks_lb.resources.*.id)
   storage_account_id             = var.storage_account_id
   eventhub_name                  = var.eventhub_name
   eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
