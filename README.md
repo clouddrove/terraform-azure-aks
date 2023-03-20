@@ -135,7 +135,6 @@ Here are some examples of how you can use this module in your inventory structur
 | enable\_http\_application\_routing | Enable HTTP Application Routing Addon (forces recreation). | `bool` | `false` | no |
 | enable\_ingress\_application\_gateway | Whether to deploy the Application Gateway ingress controller to this Kubernetes Cluster? | `bool` | `null` | no |
 | enable\_kube\_dashboard | Enable Kubernetes Dashboard. | `bool` | `false` | no |
-| enable\_pod\_security\_policy | Enable pod security policy or not. https://docs.microsoft.com/fr-fr/azure/AKS/use-pod-security-policies | `bool` | `false` | no |
 | enabled | Set to false to prevent the module from creating any resources. | `bool` | `true` | no |
 | environment | Environment (e.g. `prod`, `dev`, `staging`). | `string` | `""` | no |
 | eventhub\_authorization\_rule\_id | Eventhub authorization rule id to pass it to destination details of diagnosys setting of NSG. | `string` | `null` | no |
