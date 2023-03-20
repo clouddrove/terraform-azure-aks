@@ -67,7 +67,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
   sku_tier                         = var.aks_sku_tier
   api_server_authorized_ip_ranges  = var.private_cluster_enabled ? null : var.api_server_authorized_ip_ranges
   node_resource_group              = var.node_resource_group
-  enable_pod_security_policy       = var.enable_pod_security_policy
   disk_encryption_set_id           = var.azurerm_disk_encryption_set ? join("", azurerm_disk_encryption_set.main.*.id) : null
   private_cluster_enabled          = var.private_cluster_enabled
   private_dns_zone_id              = var.private_cluster_enabled && var.private_dns_zone_type == "Custom" ? var.private_dns_zone_id : var.private_dns_zone_type

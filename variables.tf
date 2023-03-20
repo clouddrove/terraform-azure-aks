@@ -102,12 +102,6 @@ variable "node_resource_group" {
   description = "Name of the resource group in which to put AKS nodes. If null default to MC_<AKS RG Name>"
 }
 
-variable "enable_pod_security_policy" {
-  type        = bool
-  default     = false
-  description = "Enable pod security policy or not. https://docs.microsoft.com/fr-fr/azure/AKS/use-pod-security-policies"
-}
-
 variable "private_dns_zone_type" {
   type        = string
   default     = "System"
