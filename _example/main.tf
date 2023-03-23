@@ -9,7 +9,7 @@ module "resource_group" {
   name        = "app-13"
   environment = "test"
   label_order = ["environment", "name", ]
-  location    = "North Europe"
+  location    = "Canada Central"
 }
 
 module "vnet" {
@@ -64,7 +64,7 @@ module "aks" {
   #networking
   service_cidr            = "10.0.0.0/16"
   docker_bridge_cidr      = "172.17.0.1/16"
-  kubernetes_version      = "1.24.3"
+  kubernetes_version      = "1.25.5"
   vnet_id                 = join("", module.vnet.vnet_id)
   nodes_subnet_id         = module.subnet.default_subnet_id[0]
   private_cluster_enabled = true
