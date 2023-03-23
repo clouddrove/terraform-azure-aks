@@ -9,7 +9,7 @@ variable "name" {
 
 variable "repository" {
   type        = string
-  default     = "https://github.com/clouddrove/terraform-azure-subnet.git"
+  default     = "https://github.com/clouddrove/terraform-azure-aks.git"
   description = "Terraform current module repo"
 
   validation {
