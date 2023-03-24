@@ -155,6 +155,7 @@ Here are some examples of how you can use this module in your inventory structur
 | managedby | ManagedBy, eg 'CloudDrove'. | `string` | `"hello@clouddrove.com"` | no |
 | microsoft\_defender\_enabled | Enable microsoft\_defender\_enabled Addon. | `bool` | `false` | no |
 | microsoft\_defender\_workspace\_id | The default ID of log analytics | `string` | `""` | no |
+| msi\_auth\_for\_monitoring\_enabled | Is managed identity authentication for monitoring enabled? | `bool` | `false` | no |
 | name | Name  (e.g. `app` or `cluster`). | `string` | `""` | no |
 | network\_plugin | Network plugin to use for networking. | `string` | `"azure"` | no |
 | network\_policy | (Optional) Sets up network policy to be used with Azure CNI. Network policy allows us to control the traffic flow between pods. Currently supported values are calico and azure. Changing this forces a new resource to be created. | `string` | `null` | no |
