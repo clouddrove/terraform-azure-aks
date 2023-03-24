@@ -231,6 +231,11 @@ variable "log_analytics_workspace_id" {
   default     = ""
   description = "The ID of log analytics"
 }
+variable "msi_auth_for_monitoring_enabled" {
+  type        = bool
+  default     = false
+  description = " Is managed identity authentication for monitoring enabled?"
+}
 
 variable "enable_ingress_application_gateway" {
   type        = bool
