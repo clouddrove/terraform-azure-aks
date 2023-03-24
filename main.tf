@@ -113,7 +113,8 @@ resource "azurerm_kubernetes_cluster" "aks" {
     for_each = var.log_analytics_workspace_enabled ? ["oms_agent"] : []
 
     content {
-      log_analytics_workspace_id = log_analytics_workspace_id
+      log_analytics_workspace_id      = log_analytics_workspace_id
+      msi_auth_for_monitoring_enabled = var.msi_auth_for_monitoring_enabled
     }
   }
 
