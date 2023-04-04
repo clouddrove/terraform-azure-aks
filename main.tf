@@ -67,7 +67,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
   sku_tier                         = var.aks_sku_tier
   api_server_authorized_ip_ranges  = var.private_cluster_enabled ? null : var.api_server_authorized_ip_ranges
   node_resource_group              = var.node_resource_group
-  disk_encryption_set_id           = var.azurerm_disk_encryption_set ? join("", azurerm_disk_encryption_set.main.*.id) : null
+  disk_encryption_set_id           = var.key_vault_id != "" ? join("", azurerm_disk_encryption_set.main.*.id) : null
   private_cluster_enabled          = var.private_cluster_enabled
   private_dns_zone_id              = var.private_cluster_enabled && var.private_dns_zone_type == "Custom" ? var.private_dns_zone_id : var.private_dns_zone_type
   http_application_routing_enabled = var.enable_http_application_routing
@@ -110,10 +110,10 @@ resource "azurerm_kubernetes_cluster" "aks" {
   }
 
   dynamic "oms_agent" {
-    for_each = var.log_analytics_workspace_enabled ? ["oms_agent"] : []
+    for_each = var.oms_agent_enabled ? ["oms_agent"] : []
 
     content {
-      log_analytics_workspace_id      = log_analytics_workspace_id
+      log_analytics_workspace_id      = var.log_analytics_workspace_id
       msi_auth_for_monitoring_enabled = var.msi_auth_for_monitoring_enabled
     }
   }
@@ -136,13 +136,12 @@ resource "azurerm_kubernetes_cluster" "aks" {
   }
 
   network_profile {
-    network_plugin     = var.network_plugin
-    network_policy     = var.network_policy
-    dns_service_ip     = cidrhost(var.service_cidr, 10)
-    docker_bridge_cidr = var.docker_bridge_cidr
-    service_cidr       = var.service_cidr
-    load_balancer_sku  = "standard"
-    outbound_type      = var.outbound_type
+    network_plugin    = var.network_plugin
+    network_policy    = var.network_policy
+    dns_service_ip    = cidrhost(var.service_cidr, 10)
+    service_cidr      = var.service_cidr
+    load_balancer_sku = "standard"
+    outbound_type     = var.outbound_type
 
   }
   depends_on = [
@@ -171,22 +170,22 @@ resource "azurerm_kubernetes_cluster_node_pool" "node_pools" {
 
 # Allow aks system indentiy access to encrpty disc
 resource "azurerm_role_assignment" "aks_system_identity" {
-  count                = var.enabled && var.azurerm_disk_encryption_set ? 1 : 0
+  count                = var.enabled && var.key_vault_id != "" ? 1 : 0
   principal_id         = azurerm_kubernetes_cluster.aks[0].identity[0].principal_id
   scope                = join("", azurerm_disk_encryption_set.main.*.id)
-  role_definition_name = "Contributor"
+  role_definition_name = "Key Vault Crypto Service Encryption User"
 }
 
 # Allow aks system indentiy access to ACR
 resource "azurerm_role_assignment" "aks_acr_access_principal_id" {
-  count                = var.enabled && var.acr_enabled ? 1 : 0
+  count                = var.enabled && var.acr_id != "" ? 1 : 0
   principal_id         = azurerm_kubernetes_cluster.aks[0].identity[0].principal_id
   scope                = var.acr_id
   role_definition_name = "AcrPull"
 }
 
 resource "azurerm_role_assignment" "aks_acr_access_object_id" {
-  count                = var.enabled && var.acr_enabled ? 1 : 0
+  count                = var.enabled && var.acr_id != "" ? 1 : 0
   principal_id         = azurerm_kubernetes_cluster.aks[0].kubelet_identity[0].object_id
   scope                = var.acr_id
   role_definition_name = "AcrPull"
@@ -198,7 +197,7 @@ resource "azurerm_role_assignment" "aks_user_assigned" {
   count                = var.enabled ? 1 : 0
   principal_id         = azurerm_kubernetes_cluster.aks[0].kubelet_identity[0].object_id
   scope                = format("/subscriptions/%s/resourceGroups/%s", data.azurerm_subscription.current.subscription_id, join("", azurerm_kubernetes_cluster.aks.*.node_resource_group))
-  role_definition_name = "Contributor"
+  role_definition_name = "Network Contributor"
 }
 
 resource "azurerm_user_assigned_identity" "aks_user_assigned_identity" {
@@ -226,7 +225,7 @@ resource "azurerm_role_assignment" "aks_uai_vnet_network_contributor" {
 }
 
 resource "azurerm_key_vault_key" "example" {
-  count        = var.enabled && var.azurerm_disk_encryption_set ? 1 : 0
+  count        = var.enabled && var.key_vault_id != "" ? 1 : 0
   name         = format("aks-%s-vault-key", module.labels.id)
   key_vault_id = var.key_vault_id
   key_type     = "RSA"
@@ -242,11 +241,11 @@ resource "azurerm_key_vault_key" "example" {
 }
 
 resource "azurerm_disk_encryption_set" "main" {
-  count               = var.enabled && var.azurerm_disk_encryption_set ? 1 : 0
+  count               = var.enabled && var.key_vault_id != "" ? 1 : 0
   name                = format("aks-%s-dsk-encrpt", module.labels.id)
   resource_group_name = local.resource_group_name
   location            = local.location
-  key_vault_key_id    = var.azurerm_disk_encryption_set ? join("", azurerm_key_vault_key.example.*.id) : null
+  key_vault_key_id    = var.key_vault_id != "" ? join("", azurerm_key_vault_key.example.*.id) : null
 
   identity {
     type = "SystemAssigned"
@@ -254,14 +253,14 @@ resource "azurerm_disk_encryption_set" "main" {
 }
 
 resource "azurerm_role_assignment" "azurerm_disk_encryption_set_key_vault_access" {
-  count                = var.enabled && var.azurerm_disk_encryption_set ? 1 : 0
+  count                = var.enabled && var.key_vault_id != "" ? 1 : 0
   principal_id         = azurerm_disk_encryption_set.main[0].identity.0.principal_id
   scope                = var.key_vault_id
   role_definition_name = "Key Vault Crypto Service Encryption User"
 }
 
 resource "azurerm_key_vault_access_policy" "main" {
-  count = var.enabled && var.azurerm_disk_encryption_set ? 1 : 0
+  count = var.enabled && var.key_vault_id != "" ? 1 : 0
 
   key_vault_id = var.key_vault_id
 
@@ -279,7 +278,7 @@ resource "azurerm_key_vault_access_policy" "main" {
 
 
 resource "azurerm_key_vault_access_policy" "key_vault" {
-  count = var.enabled && var.azurerm_disk_encryption_set ? 1 : 0
+  count = var.enabled && var.key_vault_id != "" ? 1 : 0
 
   key_vault_id = var.key_vault_id
 
@@ -292,7 +291,7 @@ resource "azurerm_key_vault_access_policy" "key_vault" {
 }
 
 resource "azurerm_key_vault_access_policy" "kubelet_identity" {
-  count = var.enabled && var.azurerm_disk_encryption_set ? 1 : 0
+  count = var.enabled && var.key_vault_id != "" ? 1 : 0
 
   key_vault_id = var.key_vault_id
 
