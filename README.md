@@ -130,8 +130,7 @@ Here are some examples of how you can use this module in your inventory structur
 | delimiter | Delimiter to be used between `organization`, `environment`, `name` and `attributes`. | `string` | `"-"` | no |
 | diagnostic\_log\_days | The number of days for which this Retention Policy should apply. | `number` | `"90"` | no |
 | diagnostic\_setting\_enable | n/a | `bool` | `false` | no |
-| docker\_bridge\_cidr | IP address for docker with Network CIDR. | `string` | `"172.16.0.1/16"` | no |
-| enable\_azure\_policy | Enable Azure Policy Addon. | `bool` | `false` | no |
+| enable\_azure\_policy | Enable Azure Policy Addon. | `bool` | `true` | no |
 | enable\_http\_application\_routing | Enable HTTP Application Routing Addon (forces recreation). | `bool` | `false` | no |
 | enable\_ingress\_application\_gateway | Whether to deploy the Application Gateway ingress controller to this Kubernetes Cluster? | `bool` | `null` | no |
 | enable\_kube\_dashboard | Enable Kubernetes Dashboard. | `bool` | `false` | no |
@@ -149,7 +148,6 @@ Here are some examples of how you can use this module in your inventory structur
 | linux\_profile | Username and ssh key for accessing AKS Linux nodes with ssh. | <pre>object({<br>    username = string,<br>    ssh_key  = string<br>  })</pre> | `null` | no |
 | location | Location where resource should be created. | `string` | `""` | no |
 | log\_analytics\_destination\_type | Possible values are AzureDiagnostics and Dedicated, default to AzureDiagnostics. When set to Dedicated, logs sent to a Log Analytics workspace will go into resource specific tables, instead of the legacy AzureDiagnostics table. | `string` | `"AzureDiagnostics"` | no |
-| log\_analytics\_workspace\_enabled | Enable log\_analytics\_workspace\_enabled(oms agent) Addon. | `bool` | `false` | no |
 | log\_analytics\_workspace\_id | The ID of log analytics | `string` | `""` | no |
 | log\_enabled | Is this Diagnostic Log enabled? Defaults to true. | `string` | `true` | no |
 | managedby | ManagedBy, eg 'CloudDrove'. | `string` | `"hello@clouddrove.com"` | no |
@@ -162,15 +160,16 @@ Here are some examples of how you can use this module in your inventory structur
 | node\_resource\_group | Name of the resource group in which to put AKS nodes. If null default to MC\_<AKS RG Name> | `string` | `null` | no |
 | nodes\_pools | A list of nodes pools to create, each item supports same properties as `local.default_agent_profile` | `list(any)` | `[]` | no |
 | nodes\_subnet\_id | Id of the subnet used for nodes | `string` | n/a | yes |
+| oms\_agent\_enabled | Enable log\_analytics\_workspace\_enabled(oms agent) Addon. | `bool` | `true` | no |
 | outbound\_type | The outbound (egress) routing method which should be used for this Kubernetes Cluster. Possible values are `loadBalancer` and `userDefinedRouting`. | `string` | `"loadBalancer"` | no |
-| private\_cluster\_enabled | Configure AKS as a Private Cluster : https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/kubernetes_cluster#private_cluster_enabled | `bool` | `false` | no |
+| private\_cluster\_enabled | Configure AKS as a Private Cluster : https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/kubernetes_cluster#private_cluster_enabled | `bool` | `true` | no |
 | private\_dns\_zone\_id | Id of the private DNS Zone when <private\_dns\_zone\_type> is custom | `string` | `null` | no |
 | private\_dns\_zone\_type | Set AKS private dns zone if needed and if private cluster is enabled (privatelink.<region>.azmk8s.io)<br>- "Custom" : You will have to deploy a private Dns Zone on your own and pass the id with <private\_dns\_zone\_id> variable<br>If this settings is used, aks user assigned identity will be "userassigned" instead of "systemassigned"<br>and the aks user must have "Private DNS Zone Contributor" role on the private DNS Zone<br>- "System" : AKS will manage the private zone and create it in the same resource group as the Node Resource Group<br>- "None" : In case of None you will need to bring your own DNS server and set up resolving, otherwise cluster will have issues after provisioning.<br>https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/kubernetes_cluster#private_dns_zone_id | `string` | `"System"` | no |
 | repository | Terraform current module repo | `string` | `"https://github.com/clouddrove/terraform-azure-aks.git"` | no |
 | resource\_group\_name | A container that holds related resources for an Azure solution | `string` | `""` | no |
 | retention\_policy\_enabled | Set to false to prevent the module from creating retension policy for the diagnosys setting. | `bool` | `false` | no |
 | role\_based\_access\_control | n/a | <pre>list(object({<br>    managed                = bool<br>    tenant_id              = string<br>    admin_group_object_ids = list(string)<br>    azure_rbac_enabled     = bool<br>  }))</pre> | `null` | no |
-| service\_cidr | CIDR used by kubernetes services (kubectl get svc). | `string` | n/a | yes |
+| service\_cidr | CIDR used by kubernetes services (kubectl get svc). | `string` | `"10.0.0.0/16"` | no |
 | storage\_account\_id | Storage account id to pass it to destination details of diagnosys setting of NSG. | `string` | `null` | no |
 | tags | Additional tags (e.g. map(`BusinessUnit`,`XYZ`). | `map(any)` | `{}` | no |
 | target\_resource\_id | n/a | `string` | `""` | no |
