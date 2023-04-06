@@ -86,7 +86,7 @@ variable "aks_sku_tier" {
 
 variable "private_cluster_enabled" {
   type        = bool
-  default     = false
+  default     = true
   description = "Configure AKS as a Private Cluster : https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/kubernetes_cluster#private_cluster_enabled"
 }
 
@@ -161,15 +161,9 @@ variable "linux_profile" {
 }
 
 variable "service_cidr" {
-  type = string
-
-  description = "CIDR used by kubernetes services (kubectl get svc)."
-}
-
-variable "docker_bridge_cidr" {
   type        = string
-  default     = "172.16.0.1/16"
-  description = "IP address for docker with Network CIDR."
+  default     = "10.0.0.0/16"
+  description = "CIDR used by kubernetes services (kubectl get svc)."
 }
 
 variable "outbound_type" {
@@ -210,7 +204,7 @@ variable "enable_kube_dashboard" {
 
 variable "enable_azure_policy" {
   type        = bool
-  default     = false
+  default     = true
   description = "Enable Azure Policy Addon."
 }
 
@@ -220,9 +214,9 @@ variable "microsoft_defender_enabled" {
   description = "Enable microsoft_defender_enabled Addon."
 }
 
-variable "log_analytics_workspace_enabled" {
+variable "oms_agent_enabled" {
   type        = bool
-  default     = false
+  default     = true
   description = "Enable log_analytics_workspace_enabled(oms agent) Addon."
 }
 
@@ -373,6 +367,7 @@ variable "Metric_enable" {
   default     = true
   description = "Is this Diagnostic Metric enabled? Defaults to true."
 }
+
 variable "diagnostic_setting_enable" {
   type    = bool
   default = false
