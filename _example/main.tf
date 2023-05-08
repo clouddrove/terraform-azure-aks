@@ -62,7 +62,7 @@ module "log-analytics" {
 }
 
 module "aks" {
-  source      = "./../"
+  source      = "clouddrove/aks/azure"
   name        = "app"
   environment = "test"
   label_order = ["name", "environment"]
