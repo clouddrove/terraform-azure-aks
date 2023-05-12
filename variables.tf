@@ -387,3 +387,9 @@ variable "target_resource_id" {
   type    = string
   default = ""
 }
+
+variable "cmk_enabled" {
+  type    = bool
+  default = true
+  description = "Flag to control resource creation related to cmk encryption."
+}
