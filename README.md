@@ -125,6 +125,7 @@ Here are some examples of how you can use this module in your inventory structur
 | attributes | Additional attributes (e.g. `1`). | `list(any)` | `[]` | no |
 | azurerm\_disk\_encryption\_set | The enable the Disk Encryption Set which should be used for the Nodes and Volumes. M | `bool` | `false` | no |
 | category | The name of a Diagnostic Log Category Group for this Resource. | `string` | `null` | no |
+| cmk\_enabled | Flag to control resource creation related to cmk encryption. | `bool` | `true` | no |
 | days | Number of days to create retension policies for te diagnosys setting. | `number` | `365` | no |
 | default\_node\_pool | Default node pool configuration:<pre>map(object({<br>    name                  = string<br>    count                 = number<br>    vm_size               = string<br>    os_type               = string<br>    availability_zones    = list(number)<br>    enable_auto_scaling   = bool<br>    min_count             = number<br>    max_count             = number<br>    type                  = string<br>    node_taints           = list(string)<br>    vnet_subnet_id        = string<br>    max_pods              = number<br>    os_disk_type          = string<br>    os_disk_size_gb       = number<br>    enable_node_public_ip = bool<br>}))</pre> | `map(any)` | `{}` | no |
 | delimiter | Delimiter to be used between `organization`, `environment`, `name` and `attributes`. | `string` | `"-"` | no |
