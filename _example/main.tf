@@ -107,7 +107,7 @@ module "aks" {
   }
 
 
-  ##### if requred more then one node group.
+  ##### if requred more than one node group.
   nodes_pools = [
     {
       name                  = "nodegroup1"
