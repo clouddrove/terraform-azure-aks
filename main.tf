@@ -25,6 +25,7 @@ locals {
     os_disk_type          = "Managed"
     os_disk_size_gb       = 128
     enable_node_public_ip = false
+    mode                  = "System"
   }
 
   default_node_pool         = merge(local.default_agent_profile, var.default_node_pool)
@@ -166,6 +167,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "node_pools" {
   max_count             = local.nodes_pools[count.index].max_count
   max_pods              = local.nodes_pools[count.index].max_pods
   enable_node_public_ip = local.nodes_pools[count.index].enable_node_public_ip
+  mode                  = local.nodes_pools[count.index].mode
 }
 
 # Allow aks system indentiy access to encrpty disc
