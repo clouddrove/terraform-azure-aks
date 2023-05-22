@@ -61,7 +61,7 @@ module "labels" {
 locals {
   private_dns_zone = var.private_dns_zone_type == "Custom" ? var.private_dns_zone_id : var.private_dns_zone_type
 }
-
+#tfsec:ignore:azure-container-use-rbac-permissions    ## because by default we use without rbac
 resource "azurerm_kubernetes_cluster" "aks" {
   count                            = var.enabled ? 1 : 0
   name                             = format("%s-aks", module.labels.id)
