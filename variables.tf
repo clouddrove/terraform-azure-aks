@@ -390,6 +390,6 @@ variable "target_resource_id" {
 
 variable "cmk_enabled" {
   type        = bool
-  default     = true
+  default     = false
   description = "Flag to control resource creation related to cmk encryption."
 }

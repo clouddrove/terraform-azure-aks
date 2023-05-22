@@ -62,34 +62,10 @@ module "log-analytics" {
 }
 
 
-#Key Vault
-module "vault" {
-  source  = "clouddrove/key-vault/azure"
-  version = "1.0.5"
 
-  name        = "anftnm1934"
-  environment = "test2"
-  label_order = ["name", "environment", ]
-
-  resource_group_name = module.resource_group.resource_group_name
-  location            = module.resource_group.resource_group_location
-
-  virtual_network_id = module.vnet.vnet_id[0]
-  subnet_id          = module.subnet.default_subnet_id[0]
-
-  ##RBAC
-  enable_rbac_authorization = true
-  principal_id              = ["63XXXXXXXXXXXXXXXXXXXXXXXXe4a2"]
-  role_definition_name      = ["Key Vault Administrator", ]
-
-  #### enable diagnostic setting
-  diagnostic_setting_enable  = true
-  log_analytics_workspace_id = module.log-analytics.workspace_id ## when diagnostic_setting_enable enable,  add log analytics workspace id
-
-}
 
 module "aks" {
-  source      = "../"
+  source      = "../.."
   name        = "app"
   environment = "test"
 
@@ -116,23 +92,16 @@ module "aks" {
       vm_size               = "Standard_B2s"
       count                 = 1
       enable_node_public_ip = false
+      mode                  = "User"
     },
-    {
-      name                  = "nodegroup2"
-      max_pods              = 200
-      os_disk_size_gb       = 64
-      vm_size               = "Standard_B2s"
-      count                 = 1
-      enable_node_public_ip = false
-    }
+
   ]
 
   #networking
   vnet_id         = join("", module.vnet.vnet_id)
   nodes_subnet_id = module.subnet.default_subnet_id[0]
-
   # acr_id       = "****" #pass this value if you  want aks to pull image from acr else remove it
-  key_vault_id = module.vault.id #pass this value if you want to enable Encryption with a Customer-managed key else remove it.
+  #  key_vault_id = module.vault.id #pass this value of variable 'cmk_enabled = true' if you want to enable Encryption with a Customer-managed key else remove it.
 
   #### enable diagnostic setting.
   microsoft_defender_enabled = true
