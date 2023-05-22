@@ -25,6 +25,7 @@ locals {
     os_disk_type          = "Managed"
     os_disk_size_gb       = 128
     enable_node_public_ip = false
+    mode                  = "System"
   }
 
   default_node_pool         = merge(local.default_agent_profile, var.default_node_pool)
@@ -57,6 +58,10 @@ module "labels" {
   repository  = var.repository
 }
 
+locals {
+  private_dns_zone = var.private_dns_zone_type == "Custom" ? var.private_dns_zone_id : var.private_dns_zone_type
+}
+
 resource "azurerm_kubernetes_cluster" "aks" {
   count                            = var.enabled ? 1 : 0
   name                             = format("%s-aks", module.labels.id)
@@ -65,11 +70,10 @@ resource "azurerm_kubernetes_cluster" "aks" {
   dns_prefix                       = replace(module.labels.id, "/[\\W_]/", "-")
   kubernetes_version               = var.kubernetes_version
   sku_tier                         = var.aks_sku_tier
-  api_server_authorized_ip_ranges  = var.private_cluster_enabled ? null : var.api_server_authorized_ip_ranges
   node_resource_group              = var.node_resource_group
   disk_encryption_set_id           = var.key_vault_id != "" ? join("", azurerm_disk_encryption_set.main.*.id) : null
   private_cluster_enabled          = var.private_cluster_enabled
-  private_dns_zone_id              = var.private_cluster_enabled && var.private_dns_zone_type == "Custom" ? var.private_dns_zone_id : var.private_dns_zone_type
+  private_dns_zone_id              = var.private_cluster_enabled ? local.private_dns_zone : null
   http_application_routing_enabled = var.enable_http_application_routing
   azure_policy_enabled             = var.enable_azure_policy
   key_vault_secrets_provider {
@@ -166,6 +170,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "node_pools" {
   max_count             = local.nodes_pools[count.index].max_count
   max_pods              = local.nodes_pools[count.index].max_pods
   enable_node_public_ip = local.nodes_pools[count.index].enable_node_public_ip
+  mode                  = local.nodes_pools[count.index].mode
 }
 
 # Allow aks system indentiy access to encrpty disc
@@ -305,8 +310,8 @@ resource "azurerm_key_vault_access_policy" "kubelet_identity" {
 }
 
 resource "azurerm_monitor_diagnostic_setting" "aks_diag" {
-  depends_on                     = [azurerm_kubernetes_cluster.aks]
-  count                          = var.diagnostic_setting_enable ? 1 : 0
+  depends_on                     = [azurerm_kubernetes_cluster.aks, azurerm_kubernetes_cluster_node_pool.node_pools]
+  count                          = var.enabled && var.diagnostic_setting_enable && var.private_cluster_enabled == true ? 1 : 0
   name                           = format("%s-aks-diagnostic-log", module.labels.id)
   target_resource_id             = join("", azurerm_kubernetes_cluster.aks.*.id)
   storage_account_id             = var.storage_account_id
@@ -344,8 +349,8 @@ resource "azurerm_monitor_diagnostic_setting" "aks_diag" {
 
 
 data "azurerm_resources" "aks_pip" {
-  depends_on = [azurerm_kubernetes_cluster.aks]
-  count      = var.diagnostic_setting_enable ? 1 : 0
+  depends_on = [azurerm_kubernetes_cluster.aks, azurerm_kubernetes_cluster_node_pool.node_pools]
+  count      = var.enabled && var.diagnostic_setting_enable ? 1 : 0
   type       = "Microsoft.Network/publicIPAddresses"
   required_tags = {
     Environment = var.environment
@@ -356,7 +361,7 @@ data "azurerm_resources" "aks_pip" {
 
 resource "azurerm_monitor_diagnostic_setting" "pip_aks" {
   depends_on                     = [data.azurerm_resources.aks_pip, azurerm_kubernetes_cluster.aks, azurerm_kubernetes_cluster_node_pool.node_pools]
-  count                          = var.diagnostic_setting_enable ? 1 : 0
+  count                          = var.enabled && var.diagnostic_setting_enable ? 1 : 0
   name                           = format("%s-aks-pip-diagnostic-log", module.labels.id)
   target_resource_id             = join("", data.azurerm_resources.aks_pip[count.index].resources.*.id)
   storage_account_id             = var.storage_account_id
@@ -397,8 +402,8 @@ resource "azurerm_monitor_diagnostic_setting" "pip_aks" {
 }
 
 data "azurerm_resources" "aks_nsg" {
-  depends_on = [azurerm_kubernetes_cluster.aks]
-  count      = var.diagnostic_setting_enable ? 1 : 0
+  depends_on = [data.azurerm_resources.aks_nsg, azurerm_kubernetes_cluster.aks, azurerm_kubernetes_cluster_node_pool.node_pools]
+  count      = var.enabled && var.diagnostic_setting_enable ? 1 : 0
   type       = "Microsoft.Network/networkSecurityGroups"
   required_tags = {
     Environment = var.environment
@@ -409,7 +414,7 @@ data "azurerm_resources" "aks_nsg" {
 
 resource "azurerm_monitor_diagnostic_setting" "aks-nsg" {
   depends_on                     = [data.azurerm_resources.aks_nsg, azurerm_kubernetes_cluster.aks]
-  count                          = var.diagnostic_setting_enable ? 1 : 0
+  count                          = var.enabled && var.diagnostic_setting_enable ? 1 : 0
   name                           = format("%s-aks-nsg-diagnostic-log", module.labels.id)
   target_resource_id             = join("", data.azurerm_resources.aks_nsg[count.index].resources.*.id)
   storage_account_id             = var.storage_account_id
@@ -434,7 +439,7 @@ resource "azurerm_monitor_diagnostic_setting" "aks-nsg" {
 
 data "azurerm_resources" "aks_nic" {
   depends_on = [azurerm_kubernetes_cluster.aks]
-  count      = var.diagnostic_setting_enable ? 1 : 0
+  count      = var.enabled && var.diagnostic_setting_enable && var.private_cluster_enabled == true ? 1 : 0
   type       = "Microsoft.Network/networkInterfaces"
   required_tags = {
     Environment = var.environment
@@ -445,7 +450,7 @@ data "azurerm_resources" "aks_nic" {
 
 resource "azurerm_monitor_diagnostic_setting" "aks-nic" {
   depends_on                     = [data.azurerm_resources.aks_nic, azurerm_kubernetes_cluster.aks, azurerm_kubernetes_cluster_node_pool.node_pools]
-  count                          = var.diagnostic_setting_enable ? 1 : 0
+  count                          = var.enabled && var.diagnostic_setting_enable && var.private_cluster_enabled == true ? 1 : 0
   name                           = format("%s-aks-nic-diagnostic-log", module.labels.id)
   target_resource_id             = join("", data.azurerm_resources.aks_nic[count.index].resources.*.id)
   storage_account_id             = var.storage_account_id
@@ -468,7 +473,7 @@ resource "azurerm_monitor_diagnostic_setting" "aks-nic" {
 
 data "azurerm_resources" "aks_lb" {
   depends_on = [azurerm_kubernetes_cluster.aks]
-  count      = var.diagnostic_setting_enable ? 1 : 0
+  count      = var.enabled && var.diagnostic_setting_enable ? 1 : 0
   type       = "Microsoft.Network/loadBalancers"
   required_tags = {
     Environment = var.environment
@@ -480,7 +485,7 @@ data "azurerm_resources" "aks_lb" {
 
 resource "azurerm_monitor_diagnostic_setting" "aks-lb" {
   depends_on                     = [data.azurerm_resources.aks_lb, azurerm_kubernetes_cluster.aks]
-  count                          = var.diagnostic_setting_enable ? 1 : 0
+  count                          = var.enabled && var.diagnostic_setting_enable && var.private_cluster_enabled == true ? 1 : 0
   name                           = format("%s-kubernetes-load-balancer-diagnostic-log", module.labels.id)
   target_resource_id             = join("", data.azurerm_resources.aks_lb[count.index].resources.*.id)
   storage_account_id             = var.storage_account_id
