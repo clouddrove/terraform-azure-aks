@@ -27,7 +27,7 @@ variable "environment" {
 
 variable "label_order" {
   type        = list(any)
-  default     = []
+  default     = ["name", "environment"]
   description = "Label order, e.g. `name`,`application`."
 }
 
@@ -390,6 +390,6 @@ variable "target_resource_id" {
 
 variable "cmk_enabled" {
   type        = bool
-  default     = true
+  default     = false
   description = "Flag to control resource creation related to cmk encryption."
 }
