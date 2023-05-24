@@ -69,41 +69,97 @@ This module has a few dependencies:
 
 
 Here are some examples of how you can use this module in your inventory structure:
-### azure aks
+### private_cluster
 ```hcl
-  # Basic
   module "aks" {
-  source      = ""clouddrove/vnet/aks""
+  source               = "clouddrove/aks/azure"
   name                 = "app"
   environment          = "test"
-  label_order          = ["name", "environment"]
-
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
 
-  #networking
-  service_cidr            = "10.0.0.0/16"
-  docker_bridge_cidr      = "172.17.0.1/16"
-  kubernetes_version      = "1.24.3"
-  vnet_id                 = join("", module.vnet.vnet_id)
-  nodes_subnet_id         = module.subnet.default_subnet_id[0]
-  private_cluster_enabled = true
-  enable_azure_policy     = false
-
-  #azurerm_disk_encryption_set = false   ## Default Encryption at-rest with a platform-managed key
-  #key_vault_id      = module.vault.id
-
-  #### enable diagnostic setting when aks deployed.
-  diagnostic_setting_enable  = true
-  log_analytics_workspace_id = ""
-
+  kubernetes_version = "1.25.5"
   default_node_pool = {
-  max_pods              = 200
-  os_disk_size_gb       = 64
-  vm_size               = "Standard_B2s"
-  count                 = 1
-  enable_node_public_ip = false
+    name                  = "agentpool"
+    max_pods              = 200
+    os_disk_size_gb       = 64
+    vm_size               = "Standard_B2s"
+    count                 = 1
+    enable_node_public_ip = false
   }
+
+
+  ##### if requred more than one node group.
+  nodes_pools = [
+    {
+      name                  = "nodegroup1"
+      max_pods              = 200
+      os_disk_size_gb       = 64
+      vm_size               = "Standard_B2s"
+      count                 = 1
+      enable_node_public_ip = false
+      mode                  = "User"
+    },
+
+  ]
+
+  #networking
+  vnet_id         = join("", module.vnet.vnet_id)
+  nodes_subnet_id = module.subnet.default_subnet_id[0]
+  # acr_id       = "****" #pass this value if you  want aks to pull image from acr else remove it
+  #  key_vault_id = module.vault.id #pass this value of variable 'cmk_enabled = true' if you want to enable Encryption with a Customer-managed key else remove it.
+
+  #### enable diagnostic setting.
+  microsoft_defender_enabled = true
+  diagnostic_setting_enable  = true
+  log_analytics_workspace_id = module.log-analytics.workspace_id # when diagnostic_setting_enable = true && oms_agent_enabled = true
+}
+  ```
+# public_cluster
+```hcl
+  module "aks" {
+  source               = "clouddrove/aks/azure"
+  name                 = "app"
+  environment          = "test"
+  resource_group_name = module.resource_group.resource_group_name
+  location            = module.resource_group.resource_group_location
+
+  kubernetes_version      = "1.25.5"
+  private_cluster_enabled = false
+  default_node_pool = {
+    name                  = "agentpool1"
+    max_pods              = 200
+    os_disk_size_gb       = 64
+    vm_size               = "Standard_B4ms"
+    count                 = 1
+    enable_node_public_ip = false
+  }
+
+
+  ##### if requred more than one node group.
+  nodes_pools = [
+    {
+      name                  = "nodegroup2"
+      max_pods              = 200
+      os_disk_size_gb       = 64
+      vm_size               = "Standard_B4ms"
+      count                 = 1
+      enable_node_public_ip = false
+      mode                  = "User"
+    },
+  ]
+
+  #networking
+  vnet_id         = join("", module.vnet.vnet_id)
+  nodes_subnet_id = module.subnet.default_subnet_id[0]
+
+  # acr_id       = "****" #pass this value if you  want aks to pull image from acr else remove it
+  #  key_vault_id = module.vault.id #pass this value of variable 'cmk_enabled = true' if you want to enable Encryption with a Customer-managed key else remove it.
+
+  #### enable diagnostic setting.
+  microsoft_defender_enabled = true
+  diagnostic_setting_enable  = true
+  log_analytics_workspace_id = module.log-analytics.workspace_id # when diagnostic_setting_enable = true && oms_agent_enabled = true
 }
   ```
 
@@ -125,7 +181,7 @@ Here are some examples of how you can use this module in your inventory structur
 | attributes | Additional attributes (e.g. `1`). | `list(any)` | `[]` | no |
 | azurerm\_disk\_encryption\_set | The enable the Disk Encryption Set which should be used for the Nodes and Volumes. M | `bool` | `false` | no |
 | category | The name of a Diagnostic Log Category Group for this Resource. | `string` | `null` | no |
-| cmk\_enabled | Flag to control resource creation related to cmk encryption. | `bool` | `true` | no |
+| cmk\_enabled | Flag to control resource creation related to cmk encryption. | `bool` | `false` | no |
 | days | Number of days to create retension policies for te diagnosys setting. | `number` | `365` | no |
 | default\_node\_pool | Default node pool configuration:<pre>map(object({<br>    name                  = string<br>    count                 = number<br>    vm_size               = string<br>    os_type               = string<br>    availability_zones    = list(number)<br>    enable_auto_scaling   = bool<br>    min_count             = number<br>    max_count             = number<br>    type                  = string<br>    node_taints           = list(string)<br>    vnet_subnet_id        = string<br>    max_pods              = number<br>    os_disk_type          = string<br>    os_disk_size_gb       = number<br>    enable_node_public_ip = bool<br>}))</pre> | `map(any)` | `{}` | no |
 | delimiter | Delimiter to be used between `organization`, `environment`, `name` and `attributes`. | `string` | `"-"` | no |
@@ -145,7 +201,7 @@ Here are some examples of how you can use this module in your inventory structur
 | ingress\_application\_gateway\_subnet\_id | The ID of the subnet on which to create an Application Gateway, which in turn will be integrated with the ingress controller of this Kubernetes Cluster. | `string` | `null` | no |
 | key\_vault\_id | Specifies the URL to a Key Vault Key (either from a Key Vault Key, or the Key URL for the Key Vault Secret | `string` | `""` | no |
 | kubernetes\_version | Version of Kubernetes to deploy | `string` | `"1..24.3"` | no |
-| label\_order | Label order, e.g. `name`,`application`. | `list(any)` | `[]` | no |
+| label\_order | Label order, e.g. `name`,`application`. | `list(any)` | <pre>[<br>  "name",<br>  "environment"<br>]</pre> | no |
 | linux\_profile | Username and ssh key for accessing AKS Linux nodes with ssh. | <pre>object({<br>    username = string,<br>    ssh_key  = string<br>  })</pre> | `null` | no |
 | location | Location where resource should be created. | `string` | `""` | no |
 | log\_analytics\_destination\_type | Possible values are AzureDiagnostics and Dedicated, default to AzureDiagnostics. When set to Dedicated, logs sent to a Log Analytics workspace will go into resource specific tables, instead of the legacy AzureDiagnostics table. | `string` | `"AzureDiagnostics"` | no |
