@@ -485,9 +485,9 @@ data "azurerm_resources" "aks_lb" {
 
 resource "azurerm_monitor_diagnostic_setting" "aks-lb" {
   depends_on                     = [data.azurerm_resources.aks_lb, azurerm_kubernetes_cluster.aks]
-  count                          = var.enabled && var.diagnostic_setting_enable && var.private_cluster_enabled == true ? 1 : 0
-  name                           = format("%s-kubernetes-load-balancer-diagnostic-log", module.labels.id)
-  target_resource_id             = join("", data.azurerm_resources.aks_lb[count.index].resources.*.id)
+  count                          = var.enabled && var.diagnostic_setting_enable && var.private_cluster_enabled == true ? length(data.azurerm_resources.aks_lb[0].resources) : 0
+  name                           = format("%s-kubernetes-load-balancer-diagnostic-log-%d", module.labels.id,count.index)
+  target_resource_id             = data.azurerm_resources.aks_lb[0].resources[count.index].id
   storage_account_id             = var.storage_account_id
   eventhub_name                  = var.eventhub_name
   eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
