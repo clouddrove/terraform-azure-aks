@@ -14,26 +14,26 @@ module "resource_group" {
 
 module "vnet" {
   source  = "clouddrove/vnet/azure"
-  version = "1.0.2"
+  version = "1.0.4"
 
   name                = "app"
   environment         = "test"
   label_order         = ["name", "environment"]
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
-  address_space       = "10.30.0.0/16"
+  address_spaces      = ["10.30.0.0/16"]
 }
 
 module "subnet" {
   source  = "clouddrove/subnet/azure"
-  version = "1.0.2"
+  version = "1.1.0"
 
   name                 = "app"
   environment          = "test"
   label_order          = ["name", "environment"]
   resource_group_name  = module.resource_group.resource_group_name
   location             = module.resource_group.resource_group_location
-  virtual_network_name = join("", module.vnet.vnet_name)
+  virtual_network_name = module.vnet.vnet_name
 
   #subnet
   subnet_names    = ["default"]
@@ -61,9 +61,6 @@ module "log-analytics" {
   log_analytics_workspace_location = module.resource_group.resource_group_location
 }
 
-
-
-
 module "aks" {
   source      = "../.."
   name        = "app"
@@ -72,7 +69,7 @@ module "aks" {
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
 
-  kubernetes_version = "1.25.5"
+  kubernetes_version = "1.27"
   default_node_pool = {
     name                  = "agentpool"
     max_pods              = 200
@@ -94,11 +91,10 @@ module "aks" {
       enable_node_public_ip = false
       mode                  = "User"
     },
-
   ]
 
   #networking
-  vnet_id         = join("", module.vnet.vnet_id)
+  vnet_id         = module.vnet.vnet_id
   nodes_subnet_id = module.subnet.default_subnet_id[0]
   # acr_id       = "****" #pass this value if you  want aks to pull image from acr else remove it
   #  key_vault_id = module.vault.id #pass this value of variable 'cmk_enabled = true' if you want to enable Encryption with a Customer-managed key else remove it.

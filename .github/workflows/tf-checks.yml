@@ -1,0 +1,16 @@
+name: tf-checks
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+  workflow_dispatch:
+jobs:
+  private_cluster-example:
+    uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.1
+    with:
+      working_directory: './_examples/private_cluster/'
+
+  public_cluster-example:
+    uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.1
+    with:
+      working_directory: './_examples/public_cluster/'
