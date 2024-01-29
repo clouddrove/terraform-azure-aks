@@ -879,36 +879,36 @@ resource "azurerm_monitor_diagnostic_setting" "aks-nic" {
   }
 }
 
-data "azurerm_resources" "aks_lb" {
-  depends_on = [azurerm_kubernetes_cluster.aks]
-  count      = var.enabled && var.diagnostic_setting_enable ? 1 : 0
-  type       = "Microsoft.Network/loadBalancers"
-  required_tags = {
-    Environment = var.environment
-    Name        = module.labels.id
-    Repository  = var.repository
-  }
-}
+# data "azurerm_resources" "aks_lb" {
+#   depends_on = [azurerm_kubernetes_cluster.aks]
+#   count      = var.enabled && var.diagnostic_setting_enable ? 1 : 0
+#   type       = "Microsoft.Network/loadBalancers"
+#   required_tags = {
+#     Environment = var.environment
+#     Name        = module.labels.id
+#     Repository  = var.repository
+#   }
+# }
 
-resource "azurerm_monitor_diagnostic_setting" "aks-lb" {
-  depends_on                     = [data.azurerm_resources.aks_lb, azurerm_kubernetes_cluster.aks]
-  count                          = var.enabled && var.diagnostic_setting_enable && var.private_cluster_enabled == true ? length(try(data.azurerm_resources.aks_lb[0].resources, 0)) : 0
-  name                           = format("%s-kubernetes-load-balancer-diagnostic-log-%d", module.labels.id, count.index)
-  target_resource_id             = data.azurerm_resources.aks_lb[0].resources[count.index].id
-  storage_account_id             = var.storage_account_id
-  eventhub_name                  = var.eventhub_name
-  eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
-  log_analytics_workspace_id     = var.log_analytics_workspace_id
-  log_analytics_destination_type = var.log_analytics_destination_type
+# resource "azurerm_monitor_diagnostic_setting" "aks-lb" {
+#   depends_on                     = [data.azurerm_resources.aks_lb, azurerm_kubernetes_cluster.aks]
+#   count                          = var.enabled && var.diagnostic_setting_enable && var.private_cluster_enabled == true ? length(try(data.azurerm_resources.aks_lb[0].resources, 0)) : 0
+#   name                           = format("%s-kubernetes-load-balancer-diagnostic-log-%d", module.labels.id, count.index)
+#   target_resource_id             = data.azurerm_resources.aks_lb[0].resources[count.index].id
+#   storage_account_id             = var.storage_account_id
+#   eventhub_name                  = var.eventhub_name
+#   eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
+#   log_analytics_workspace_id     = var.log_analytics_workspace_id
+#   log_analytics_destination_type = var.log_analytics_destination_type
 
-  dynamic "metric" {
-    for_each = var.metric_enabled ? ["AllMetrics"] : []
-    content {
-      category = metric.value
-      enabled  = true
-    }
-  }
-  lifecycle {
-    ignore_changes = [log_analytics_destination_type]
-  }
-}
+#   dynamic "metric" {
+#     for_each = var.metric_enabled ? ["AllMetrics"] : []
+#     content {
+#       category = metric.value
+#       enabled  = true
+#     }
+#   }
+#   lifecycle {
+#     ignore_changes = [log_analytics_destination_type]
+#   }
+# }

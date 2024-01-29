@@ -583,12 +583,6 @@ variable "role_based_access_control" {
     azure_rbac_enabled     = bool
   }))
   default = null
-  # default = {
-  #  managed  = true
-  #  tenant_id  = null
-  #  admin_group_object_ids  = null
-  #  azure_rbac_enabled = false
-  # }
 }
 
 variable "kubelet_config" {

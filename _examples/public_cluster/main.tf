@@ -1,6 +1,7 @@
 provider "azurerm" {
   features {}
 }
+data "azurerm_client_config" "current_client_config" {}
 
 module "resource_group" {
   source  = "clouddrove/resource-group/azure"
@@ -126,7 +127,7 @@ module "aks" {
   nodes_subnet_id = module.subnet.default_subnet_id[0]
 
   # acr_id       = "****" #pass this value if you  want aks to pull image from acr else remove it
-  # key_vault_id = module.vault.id #pass this value of variable 'cmk_enabled = true' if you want to enable Encryption with a Customer-managed key else remove it.
+  key_vault_id = module.vault.id #pass this value of variable 'cmk_enabled = true' if you want to enable Encryption with a Customer-managed key else remove it.
 
   #### enable diagnostic setting.
   microsoft_defender_enabled = true
