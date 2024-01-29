@@ -63,7 +63,7 @@ variable "kubernetes_version" {
 
 variable "workload_runtime" {
   type        = string
-  default     = "OCIContainer"
+  default     = null
   description = "Used to specify the workload runtime. Allowed values are OCIContainer, WasmWasi and KataMshvVmIsolation."
 }
 
@@ -376,7 +376,6 @@ map(object({
     min_count             = number
     max_count             = number
     type                  = string
-    node_taints           = list(string)
     vnet_subnet_id        = string
     max_pods              = number
     os_disk_type          = string
@@ -420,12 +419,13 @@ variable "outbound_type" {
 
 variable "nodes_subnet_id" {
   type        = string
+  default     = null
   description = "Id of the subnet used for nodes"
 }
 
 variable "nodes_pools" {
-  default     = []
   type        = list(any)
+  default     = []
   description = "A list of nodes pools to create, each item supports same properties as `local.default_agent_profile`"
 
 }
@@ -558,16 +558,9 @@ variable "acr_enabled" {
 
 variable "acr_id" {
   type        = string
-  default     = ""
+  default     = null
   description = "azure container resource id to provide access for aks"
 }
-
-variable "enable_rotation_policy" {
-  type        = bool
-  default     = false
-  description = "Whether to enable rotation policy or not"
-}
-
 
 variable "auto_scaler_profile_enabled" {
   type        = bool
@@ -578,7 +571,7 @@ variable "auto_scaler_profile_enabled" {
 
 variable "key_vault_id" {
   type        = string
-  default     = ""
+  default     = null
   description = "Specifies the URL to a Key Vault Key (either from a Key Vault Key, or the Key URL for the Key Vault Secret"
 }
 
@@ -590,6 +583,12 @@ variable "role_based_access_control" {
     azure_rbac_enabled     = bool
   }))
   default = null
+  # default = {
+  #  managed  = true
+  #  tenant_id  = null
+  #  admin_group_object_ids  = null
+  #  azure_rbac_enabled = false
+  # }
 }
 
 variable "kubelet_config" {
@@ -635,7 +634,7 @@ variable "network_plugin_mode" {
 
 variable "net_profile_pod_cidr" {
   type        = string
-  default     = null
+  default     = null # "10.244.0.0/16"
   description = " (Optional) The CIDR to use for pod IP addresses. This field can only be set when network_plugin is set to kubenet. Changing this forces a new resource to be created."
 }
 
@@ -683,7 +682,7 @@ variable "diagnostic_setting_enable" {
 
 variable "cmk_enabled" {
   type        = bool
-  default     = false
+  default     = true
   description = "Flag to control resource creation related to cmk encryption."
 }
 
@@ -985,7 +984,7 @@ variable "auto_scaler_profile" {
     expander                         = "random"
     max_graceful_termination_sec     = "600"
     max_node_provisioning_time       = "15m"
-    max_unready_nodes                = 0
+    max_unready_nodes                = 3
     max_unready_percentage           = 45
     new_pod_scale_up_delay           = "10s"
     scale_down_delay_after_add       = "10m"
@@ -1043,4 +1042,25 @@ variable "kv_logs" {
     enabled        = true
     category_group = ["AllLogs"]
   }
+}
+
+variable "rotation_policy" {
+  type = map(object({
+    time_before_expiry   = string
+    expire_after         = string
+    notify_before_expiry = string
+  }))
+  default = {
+    example_rotation_policy = {
+      time_before_expiry   = "P30D"
+      expire_after         = "P90D"
+      notify_before_expiry = "P29D"
+    }
+  }
+}
+
+variable "rotation_policy_enabled" {
+  type        = bool
+  default     = true
+  description = "Whether or not to enable rotation policy"
 }

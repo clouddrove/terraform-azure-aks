@@ -64,7 +64,7 @@ module "labels" {
 locals {
   private_dns_zone = var.private_dns_zone_type == "Custom" ? var.private_dns_zone_id : var.private_dns_zone_type
 }
-#tfsec:ignore:azure-container-use-rbac-permissions    ## because by default we use without rbac
+
 resource "azurerm_kubernetes_cluster" "aks" {
   count                            = var.enabled ? 1 : 0
   name                             = format("%s-aks", module.labels.id)
@@ -74,8 +74,8 @@ resource "azurerm_kubernetes_cluster" "aks" {
   kubernetes_version               = var.kubernetes_version
   automatic_channel_upgrade        = var.automatic_channel_upgrade
   sku_tier                         = var.aks_sku_tier
-  node_resource_group              = var.node_resource_group
-  disk_encryption_set_id           = var.key_vault_id != "" ? azurerm_disk_encryption_set.main[0].id : null
+  node_resource_group              = var.node_resource_group == null ? format("%s-aks-node-rg", module.labels.id) : var.node_resource_group
+  disk_encryption_set_id           = var.key_vault_id != null ? azurerm_disk_encryption_set.main[0].id : null
   private_cluster_enabled          = var.private_cluster_enabled
   private_dns_zone_id              = var.private_cluster_enabled ? local.private_dns_zone : null
   http_application_routing_enabled = var.enable_http_application_routing
@@ -617,7 +617,6 @@ resource "azurerm_role_assignment" "aks_acr_access_object_id" {
   role_definition_name = "AcrPull"
 }
 
-
 # Allow user assigned identity to manage AKS items in MC_xxx RG
 resource "azurerm_role_assignment" "aks_user_assigned" {
   count                = var.enabled ? 1 : 0
@@ -629,11 +628,10 @@ resource "azurerm_role_assignment" "aks_user_assigned" {
 resource "azurerm_user_assigned_identity" "aks_user_assigned_identity" {
   count = var.enabled && var.private_cluster_enabled && var.private_dns_zone_type == "Custom" ? 1 : 0
 
-  name                = format("aks-%s-identity", module.labels.id)
+  name                = format("%s-aks-identity", module.labels.id)
   resource_group_name = local.resource_group_name
   location            = local.location
 }
-
 
 resource "azurerm_role_assignment" "aks_uai_private_dns_zone_contributor" {
   count = var.enabled && var.private_cluster_enabled && var.private_dns_zone_type == "Custom" ? 1 : 0
@@ -652,7 +650,7 @@ resource "azurerm_role_assignment" "aks_uai_vnet_network_contributor" {
 
 resource "azurerm_key_vault_key" "example" {
   count        = var.enabled && var.cmk_enabled ? 1 : 0
-  name         = format("aks-%s-vault-key", module.labels.id)
+  name         = format("%s-aks-encryption-key", module.labels.id)
   key_vault_id = var.key_vault_id
   key_type     = "RSA"
   key_size     = 2048
@@ -665,21 +663,21 @@ resource "azurerm_key_vault_key" "example" {
     "wrapKey",
   ]
   dynamic "rotation_policy" {
-    for_each = var.enable_rotation_policy ? [1] : []
+    for_each = var.rotation_policy_enabled ? var.rotation_policy : {}
     content {
       automatic {
-        time_before_expiry = "P30D"
+        time_before_expiry = rotation_policy.value.time_before_expiry
       }
 
-      expire_after         = "P90D"
-      notify_before_expiry = "P29D"
+      expire_after         = rotation_policy.value.expire_after
+      notify_before_expiry = rotation_policy.value.notify_before_expiry
     }
   }
 }
 
 resource "azurerm_disk_encryption_set" "main" {
   count               = var.enabled && var.cmk_enabled ? 1 : 0
-  name                = format("aks-%s-dsk-encrpt", module.labels.id)
+  name                = format("%s-dsk-encrpt", module.labels.id)
   resource_group_name = local.resource_group_name
   location            = local.location
   key_vault_key_id    = var.key_vault_id != "" ? azurerm_key_vault_key.example[0].id : null
@@ -719,7 +717,7 @@ resource "azurerm_key_vault_access_policy" "key_vault" {
   key_vault_id = var.key_vault_id
 
   tenant_id = data.azurerm_client_config.current.tenant_id
-  object_id = azurerm_kubernetes_cluster.aks[0].key_vault_secrets_provider[0].secret_identity[0].object_id
+  object_id = azurerm_kubernetes_cluster.aks[0].identity[0].principal_id
 
   key_permissions         = ["Get"]
   certificate_permissions = ["Get"]
