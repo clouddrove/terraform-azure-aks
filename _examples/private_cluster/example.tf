@@ -7,7 +7,7 @@ module "resource_group" {
   source  = "clouddrove/resource-group/azure"
   version = "1.0.2"
 
-  name        = "app-public"
+  name        = "app"
   environment = "test"
   label_order = ["name", "environment", ]
   location    = "Canada Central"
@@ -97,13 +97,12 @@ module "aks" {
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
 
-  kubernetes_version      = "1.27.7"
-  private_cluster_enabled = false
+  kubernetes_version = "1.27"
   default_node_pool = {
-    name                  = "agentpool1"
+    name                  = "agentpool"
     max_pods              = 200
     os_disk_size_gb       = 64
-    vm_size               = "Standard_B4ms"
+    vm_size               = "Standard_B2s"
     count                 = 1
     enable_node_public_ip = false
   }
@@ -125,9 +124,9 @@ module "aks" {
   #networking
   vnet_id         = module.vnet.vnet_id
   nodes_subnet_id = module.subnet.default_subnet_id[0]
-
-  # acr_id       = "****" #pass this value if you  want aks to pull image from acr else remove it
-  key_vault_id = module.vault.id #pass this value of variable 'cmk_enabled = true' if you want to enable Encryption with a Customer-managed key else remove it.
+  # acr_id       = module.container-registry.container_registry_id #pass this value if you  want aks to pull image from acr else remove it
+  key_vault_id      = module.vault.id #pass this value of variable 'cmk_enabled = true' if you want to enable Encryption with a Customer-managed key else remove it.
+  admin_objects_ids = [data.azurerm_client_config.current_client_config.object_id]
 
   #### enable diagnostic setting.
   microsoft_defender_enabled = true

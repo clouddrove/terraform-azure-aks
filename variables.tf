@@ -577,10 +577,9 @@ variable "key_vault_id" {
 
 variable "role_based_access_control" {
   type = list(object({
-    managed                = bool
-    tenant_id              = string
-    admin_group_object_ids = list(string)
-    azure_rbac_enabled     = bool
+    managed            = bool
+    tenant_id          = optional(string)
+    azure_rbac_enabled = bool
   }))
   default = null
 }
@@ -1057,4 +1056,33 @@ variable "rotation_policy_enabled" {
   type        = bool
   default     = true
   description = "Whether or not to enable rotation policy"
+}
+
+variable "role_based_access_control_enabled" {
+  type        = bool
+  default     = true
+  description = "Whether role based acces control should be enabled or not"
+}
+
+variable "local_account_disabled" {
+  type        = bool
+  default     = false
+  description = "Whether local account should be disable or not"
+}
+
+variable "admin_group_id" {
+  type    = list(string)
+  default = null
+
+}
+
+variable "expiration_date" {
+  type        = string
+  default     = "2024-05-22T18:29:59Z"
+  description = "Expiration UTC datetime (Y-m-d'T'H:M:S'Z')"
+}
+
+variable "admin_objects_ids" {
+  type    = list(string)
+  default = null
 }

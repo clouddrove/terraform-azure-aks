@@ -66,23 +66,25 @@ locals {
 }
 
 resource "azurerm_kubernetes_cluster" "aks" {
-  count                            = var.enabled ? 1 : 0
-  name                             = format("%s-aks", module.labels.id)
-  location                         = local.location
-  resource_group_name              = local.resource_group_name
-  dns_prefix                       = replace(module.labels.id, "/[\\W_]/", "-")
-  kubernetes_version               = var.kubernetes_version
-  automatic_channel_upgrade        = var.automatic_channel_upgrade
-  sku_tier                         = var.aks_sku_tier
-  node_resource_group              = var.node_resource_group == null ? format("%s-aks-node-rg", module.labels.id) : var.node_resource_group
-  disk_encryption_set_id           = var.key_vault_id != null ? azurerm_disk_encryption_set.main[0].id : null
-  private_cluster_enabled          = var.private_cluster_enabled
-  private_dns_zone_id              = var.private_cluster_enabled ? local.private_dns_zone : null
-  http_application_routing_enabled = var.enable_http_application_routing
-  azure_policy_enabled             = var.enable_azure_policy
-  edge_zone                        = var.edge_zone
-  image_cleaner_enabled            = var.image_cleaner_enabled
-  image_cleaner_interval_hours     = var.image_cleaner_interval_hours
+  count                             = var.enabled ? 1 : 0
+  name                              = format("%s-aks1", module.labels.id)
+  location                          = local.location
+  resource_group_name               = local.resource_group_name
+  dns_prefix                        = replace(module.labels.id, "/[\\W_]/", "-")
+  kubernetes_version                = var.kubernetes_version
+  automatic_channel_upgrade         = var.automatic_channel_upgrade
+  sku_tier                          = var.aks_sku_tier
+  node_resource_group               = var.node_resource_group == null ? format("%s-aks-node-rg", module.labels.id) : var.node_resource_group
+  disk_encryption_set_id            = var.key_vault_id != null ? azurerm_disk_encryption_set.main[0].id : null
+  private_cluster_enabled           = var.private_cluster_enabled
+  private_dns_zone_id               = var.private_cluster_enabled ? local.private_dns_zone : null
+  http_application_routing_enabled  = var.enable_http_application_routing
+  azure_policy_enabled              = var.enable_azure_policy
+  edge_zone                         = var.edge_zone
+  image_cleaner_enabled             = var.image_cleaner_enabled
+  image_cleaner_interval_hours      = var.image_cleaner_interval_hours
+  role_based_access_control_enabled = var.role_based_access_control_enabled
+  local_account_disabled            = var.local_account_disabled
 
   dynamic "default_node_pool" {
     for_each = var.enable_auto_scaling == true ? ["default_node_pool_auto_scaled"] : []
@@ -337,7 +339,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
     content {
       managed                = azure_active_directory_role_based_access_control.value.managed
       tenant_id              = azure_active_directory_role_based_access_control.value.tenant_id
-      admin_group_object_ids = azure_active_directory_role_based_access_control.value.admin_group_object_ids
+      admin_group_object_ids = !azure_active_directory_role_based_access_control.value.azure_rbac_enabled ? var.admin_group_id : null
       azure_rbac_enabled     = azure_active_directory_role_based_access_control.value.azure_rbac_enabled
     }
   }
@@ -594,6 +596,13 @@ resource "azurerm_kubernetes_cluster_node_pool" "node_pools" {
   }
 }
 
+resource "azurerm_role_assignment" "aks_entra_id" {
+  count                = var.enabled && var.role_based_access_control != null && var.role_based_access_control[0].azure_rbac_enabled == true ? length(var.admin_group_id) : 0
+  scope                = azurerm_kubernetes_cluster.aks[0].id
+  role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
+  principal_id         = var.admin_group_id[count.index]
+}
+
 # Allow aks system indentiy access to encrpty disc
 resource "azurerm_role_assignment" "aks_system_identity" {
   count                = var.enabled && var.cmk_enabled ? 1 : 0
@@ -648,12 +657,21 @@ resource "azurerm_role_assignment" "aks_uai_vnet_network_contributor" {
   principal_id         = azurerm_user_assigned_identity.aks_user_assigned_identity[0].principal_id
 }
 
+resource "azurerm_role_assignment" "rbac_keyvault_crypto_officer" {
+  for_each             = toset(var.enabled && var.cmk_enabled ? var.admin_objects_ids : [])
+  scope                = var.key_vault_id
+  role_definition_name = "Key Vault Crypto Officer"
+  principal_id         = each.value
+}
+
 resource "azurerm_key_vault_key" "example" {
-  count        = var.enabled && var.cmk_enabled ? 1 : 0
-  name         = format("%s-aks-encryption-key", module.labels.id)
-  key_vault_id = var.key_vault_id
-  key_type     = "RSA"
-  key_size     = 2048
+  depends_on      = [azurerm_role_assignment.rbac_keyvault_crypto_officer]
+  count           = var.enabled && var.cmk_enabled ? 1 : 0
+  name            = format("%s-aks-encrypted-key", module.labels.id)
+  expiration_date = var.expiration_date
+  key_vault_id    = var.key_vault_id
+  key_type        = "RSA"
+  key_size        = 2048
   key_opts = [
     "decrypt",
     "encrypt",
@@ -677,7 +695,7 @@ resource "azurerm_key_vault_key" "example" {
 
 resource "azurerm_disk_encryption_set" "main" {
   count               = var.enabled && var.cmk_enabled ? 1 : 0
-  name                = format("%s-dsk-encrpt", module.labels.id)
+  name                = format("%s-dsk-encrpted", module.labels.id)
   resource_group_name = local.resource_group_name
   location            = local.location
   key_vault_key_id    = var.key_vault_id != "" ? azurerm_key_vault_key.example[0].id : null
