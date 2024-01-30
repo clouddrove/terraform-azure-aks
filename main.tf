@@ -597,7 +597,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "node_pools" {
 }
 
 resource "azurerm_role_assignment" "aks_entra_id" {
-  count                = var.enabled && var.role_based_access_control != null && var.role_based_access_control[0].azure_rbac_enabled == true ? length(var.admin_group_id) : 0
+  count                = var.enabled && var.role_based_access_control != null && try(var.role_based_access_control[0].azure_rbac_enabled, false) == true ? length(var.admin_group_id) : 0
   scope                = azurerm_kubernetes_cluster.aks[0].id
   role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
   principal_id         = var.admin_group_id[count.index]

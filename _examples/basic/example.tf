@@ -7,8 +7,8 @@ module "aks" {
   name        = "app"
   environment = "test"
 
-  resource_group_name = module.resource_group.resource_group_name
-  location            = module.resource_group.resource_group_location
+  resource_group_name = "resource_group_name"
+  location            = "Central India"
 
   kubernetes_version = "1.27"
   default_node_pool = {
