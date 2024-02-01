@@ -66,7 +66,7 @@ locals {
 
 resource "azurerm_kubernetes_cluster" "aks" {
   count                             = var.enabled ? 1 : 0
-  name                              = format("%s-aks1", module.labels.id)
+  name                              = format("%s-aks", module.labels.id)
   location                          = local.location
   resource_group_name               = local.resource_group_name
   dns_prefix                        = replace(module.labels.id, "/[\\W_]/", "-")
@@ -636,7 +636,7 @@ resource "azurerm_role_assignment" "aks_user_assigned" {
 resource "azurerm_user_assigned_identity" "aks_user_assigned_identity" {
   count = var.enabled && var.private_cluster_enabled && var.private_dns_zone_type == "Custom" ? 1 : 0
 
-  name                = format("%s-aks-identity", module.labels.id)
+  name                = format("%s-aks-mid", module.labels.id)
   resource_group_name = local.resource_group_name
   location            = local.location
 }
@@ -694,7 +694,7 @@ resource "azurerm_key_vault_key" "example" {
 
 resource "azurerm_disk_encryption_set" "main" {
   count               = var.enabled && var.cmk_enabled ? 1 : 0
-  name                = format("%s-dsk-encrpted", module.labels.id)
+  name                = format("%s-aks-dsk-encrpted", module.labels.id)
   resource_group_name = local.resource_group_name
   location            = local.location
   key_vault_key_id    = var.key_vault_id != "" ? azurerm_key_vault_key.example[0].id : null
@@ -757,7 +757,7 @@ resource "azurerm_key_vault_access_policy" "kubelet_identity" {
 resource "azurerm_monitor_diagnostic_setting" "aks_diag" {
   depends_on                     = [azurerm_kubernetes_cluster.aks, azurerm_kubernetes_cluster_node_pool.node_pools]
   count                          = var.enabled && var.diagnostic_setting_enable && var.private_cluster_enabled == true ? 1 : 0
-  name                           = format("%s-aks-diagnostic-log", module.labels.id)
+  name                           = format("%s-aks-diag-log", module.labels.id)
   target_resource_id             = azurerm_kubernetes_cluster.aks[0].id
   storage_account_id             = var.storage_account_id
   eventhub_name                  = var.eventhub_name
@@ -840,7 +840,7 @@ data "azurerm_resources" "aks_nsg" {
 resource "azurerm_monitor_diagnostic_setting" "aks-nsg" {
   depends_on                     = [data.azurerm_resources.aks_nsg, azurerm_kubernetes_cluster.aks]
   count                          = var.enabled && var.diagnostic_setting_enable ? 1 : 0
-  name                           = format("%s-aks-nsg-diagnostic-log", module.labels.id)
+  name                           = format("%s-aks-nsg-diag-log", module.labels.id)
   target_resource_id             = data.azurerm_resources.aks_nsg[count.index].resources[0].id
   storage_account_id             = var.storage_account_id
   eventhub_name                  = var.eventhub_name
@@ -875,7 +875,7 @@ data "azurerm_resources" "aks_nic" {
 resource "azurerm_monitor_diagnostic_setting" "aks-nic" {
   depends_on                     = [data.azurerm_resources.aks_nic, azurerm_kubernetes_cluster.aks, azurerm_kubernetes_cluster_node_pool.node_pools]
   count                          = var.enabled && var.diagnostic_setting_enable && var.private_cluster_enabled == true ? 1 : 0
-  name                           = format("%s-aks-nic-diagnostic-log", module.labels.id)
+  name                           = format("%s-aks-nic-dia-log", module.labels.id)
   target_resource_id             = data.azurerm_resources.aks_nic[count.index].resources[0].id
   storage_account_id             = var.storage_account_id
   eventhub_name                  = var.eventhub_name
