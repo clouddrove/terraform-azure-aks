@@ -1077,16 +1077,16 @@ variable "admin_objects_ids" {
 
 variable "api_server_access_profile" {
   type = object({
-    authorized_ip_ranges        = optional(list(string))
-    vnet_integration_enabled    = optional(bool)
-    subnet_id = optional(string)
+    authorized_ip_ranges     = optional(list(string))
+    vnet_integration_enabled = optional(bool)
+    subnet_id                = optional(string)
   })
-  default = null
+  default     = null
   description = "Controlling the public and private exposure of a cluster please see the properties"
 }
 
 variable "aks_user_auth_role" {
-  type = any
-  default = []
+  type        = any
+  default     = []
   description = "Group and User role base access to AKS"
 }

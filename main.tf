@@ -51,8 +51,8 @@ locals {
 
 module "labels" {
 
-  source  = "clouddrove/labels/azure"
-  version = "1.0.0"
+  source      = "clouddrove/labels/azure"
+  version     = "1.0.0"
   name        = var.name
   environment = var.environment
   managedby   = var.managedby
@@ -258,9 +258,9 @@ resource "azurerm_kubernetes_cluster" "aks" {
     for_each = var.api_server_access_profile != null ? [1] : []
 
     content {
-      authorized_ip_ranges = var.api_server_access_profile.authorized_ip_ranges
+      authorized_ip_ranges     = var.api_server_access_profile.authorized_ip_ranges
       vnet_integration_enabled = var.api_server_access_profile.vnet_integration_enabled
-      subnet_id            = var.api_server_access_profile.subnet_id
+      subnet_id                = var.api_server_access_profile.subnet_id
     }
   }
 
@@ -497,7 +497,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
   tags = module.labels.tags
 }
 resource "azurerm_kubernetes_cluster_node_pool" "node_pools" {
-  count                         = var.enabled ? length(local.nodes_pools) : 0 
+  count                         = var.enabled ? length(local.nodes_pools) : 0
   kubernetes_cluster_id         = azurerm_kubernetes_cluster.aks[0].id
   name                          = local.nodes_pools[count.index].name
   vm_size                       = local.nodes_pools[count.index].vm_size
