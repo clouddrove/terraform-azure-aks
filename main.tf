@@ -53,7 +53,6 @@ module "labels" {
 
   source  = "clouddrove/labels/azure"
   version = "1.0.0"
-
   name        = var.name
   environment = var.environment
   managedby   = var.managedby
@@ -79,7 +78,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
   private_cluster_enabled           = var.private_cluster_enabled
   private_dns_zone_id               = var.private_cluster_enabled ? local.private_dns_zone : null
   http_application_routing_enabled  = var.enable_http_application_routing
-  azure_policy_enabled              = var.enable_azure_policy
+  azure_policy_enabled              = var.azure_policy_enabled
   edge_zone                         = var.edge_zone
   image_cleaner_enabled             = var.image_cleaner_enabled
   image_cleaner_interval_hours      = var.image_cleaner_interval_hours
@@ -256,11 +255,12 @@ resource "azurerm_kubernetes_cluster" "aks" {
   }
 
   dynamic "api_server_access_profile" {
-    for_each = var.api_server_authorized_ip_ranges != null || var.api_server_subnet_id != null ? [1] : []
+    for_each = var.api_server_access_profile != null ? [1] : []
 
     content {
-      authorized_ip_ranges = var.api_server_authorized_ip_ranges
-      subnet_id            = var.api_server_subnet_id
+      authorized_ip_ranges = var.api_server_access_profile.authorized_ip_ranges
+      vnet_integration_enabled = var.api_server_access_profile.vnet_integration_enabled
+      subnet_id            = var.api_server_access_profile.subnet_id
     }
   }
 
@@ -497,8 +497,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
   tags = module.labels.tags
 }
 resource "azurerm_kubernetes_cluster_node_pool" "node_pools" {
-
-  count                         = length(local.nodes_pools)
+  count                         = var.enabled ? length(local.nodes_pools) : 0 
   kubernetes_cluster_id         = azurerm_kubernetes_cluster.aks[0].id
   name                          = local.nodes_pools[count.index].name
   vm_size                       = local.nodes_pools[count.index].vm_size
@@ -799,7 +798,7 @@ data "azurerm_resources" "aks_pip" {
 resource "azurerm_monitor_diagnostic_setting" "pip_aks" {
   depends_on                     = [data.azurerm_resources.aks_pip, azurerm_kubernetes_cluster.aks, azurerm_kubernetes_cluster_node_pool.node_pools]
   count                          = var.enabled && var.diagnostic_setting_enable ? 1 : 0
-  name                           = format("%s-aks-pip-diagnostic-log", module.labels.id)
+  name                           = format("%s-aks-pip-diag-log", module.labels.id)
   target_resource_id             = data.azurerm_resources.aks_pip[count.index].resources[0].id
   storage_account_id             = var.storage_account_id
   eventhub_name                  = var.eventhub_name
@@ -897,36 +896,11 @@ resource "azurerm_monitor_diagnostic_setting" "aks-nic" {
   }
 }
 
-# data "azurerm_resources" "aks_lb" {
-#   depends_on = [azurerm_kubernetes_cluster.aks]
-#   count      = var.enabled && var.diagnostic_setting_enable ? 1 : 0
-#   type       = "Microsoft.Network/loadBalancers"
-#   required_tags = {
-#     Environment = var.environment
-#     Name        = module.labels.id
-#     Repository  = var.repository
-#   }
-# }
-
-# resource "azurerm_monitor_diagnostic_setting" "aks-lb" {
-#   depends_on                     = [data.azurerm_resources.aks_lb, azurerm_kubernetes_cluster.aks]
-#   count                          = var.enabled && var.diagnostic_setting_enable && var.private_cluster_enabled == true ? length(try(data.azurerm_resources.aks_lb[0].resources, 0)) : 0
-#   name                           = format("%s-kubernetes-load-balancer-diagnostic-log-%d", module.labels.id, count.index)
-#   target_resource_id             = data.azurerm_resources.aks_lb[0].resources[count.index].id
-#   storage_account_id             = var.storage_account_id
-#   eventhub_name                  = var.eventhub_name
-#   eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
-#   log_analytics_workspace_id     = var.log_analytics_workspace_id
-#   log_analytics_destination_type = var.log_analytics_destination_type
-
-#   dynamic "metric" {
-#     for_each = var.metric_enabled ? ["AllMetrics"] : []
-#     content {
-#       category = metric.value
-#       enabled  = true
-#     }
-#   }
-#   lifecycle {
-#     ignore_changes = [log_analytics_destination_type]
-#   }
-# }
+## AKS user authentication with Azure Rbac. 
+resource "azurerm_role_assignment" "example" {
+  for_each = var.enabled && var.aks_user_auth_role != null ? { for k in var.aks_user_auth_role : k.principal_id => k } : null
+  # scope                = 
+  scope                = each.value.scope
+  role_definition_name = each.value.role_definition_name
+  principal_id         = each.value.principal_id
+}

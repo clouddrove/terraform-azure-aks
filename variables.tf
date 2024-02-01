@@ -336,12 +336,6 @@ variable "private_cluster_enabled" {
   description = "Configure AKS as a Private Cluster : https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/kubernetes_cluster#private_cluster_enabled"
 }
 
-variable "api_server_authorized_ip_ranges" {
-  type        = list(string)
-  default     = []
-  description = "Ip ranges allowed to interract with Kubernetes API. Default no restrictions"
-}
-
 variable "node_resource_group" {
   type        = string
   default     = null
@@ -442,7 +436,7 @@ variable "enable_http_application_routing" {
   description = "Enable HTTP Application Routing Addon (forces recreation)."
 }
 
-variable "enable_azure_policy" {
+variable "azure_policy_enabled" {
   type        = bool
   default     = true
   description = "Enable Azure Policy Addon."
@@ -993,12 +987,6 @@ variable "auto_scaler_profile" {
   description = "Auto scaler profile configuration"
 }
 
-variable "api_server_subnet_id" {
-  type        = string
-  default     = null
-  description = "(Optional) The ID of the Subnet where the API server endpoint is delegated to."
-}
-
 variable "automatic_channel_upgrade" {
   type        = string
   default     = null
@@ -1085,4 +1073,20 @@ variable "expiration_date" {
 variable "admin_objects_ids" {
   type    = list(string)
   default = null
+}
+
+variable "api_server_access_profile" {
+  type = object({
+    authorized_ip_ranges        = optional(list(string))
+    vnet_integration_enabled    = optional(bool)
+    subnet_id = optional(string)
+  })
+  default = null
+  description = "Controlling the public and private exposure of a cluster please see the properties"
+}
+
+variable "aks_user_auth_role" {
+  type = any
+  default = []
+  description = "Group and User role base access to AKS"
 }

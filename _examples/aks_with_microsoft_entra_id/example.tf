@@ -65,7 +65,7 @@ module "log-analytics" {
 module "vault" {
   source  = "clouddrove/key-vault/azure"
   version = "1.1.0"
-  name    = "apptestwvsh"
+  name    = "apptestwvshaks"
   #environment         = local.environment
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
@@ -127,12 +127,17 @@ module "aks" {
 
   ## Microsoft entra_id integration
   local_account_disabled = true
-  admin_group_id         = ["*******"]
+  admin_group_id         = ["***ed"]
   role_based_access_control = [{
     managed   = true
-    tenant_id = "*******" ## To be mentioned when azure aks with microsoft entra_id with kubernetes rbac is enabled (or azure_rbac_enabled = true, in variable role_based_access_control)
-    #admin_group_object_ids = ["903092b5-b3da-46c5-b672-fbc9bf0b6eed"] ## To be mentioned when azure aks with microsoft entra_id with kubernetes rbac is enabled (or azure_rbac_enabled = true, in variable role_based_access_control)
-    azure_rbac_enabled = false
+    tenant_id = "b****f7bdd" ## To be mentioned when azure aks with microsoft entra_id with kubernetes rbac is enabled (or azure_rbac_enabled = true, in variable role_based_access_control)
+    #admin_group_object_ids = ["*****-b3da-46c5-b672-fbc9bf0b****"] ## To be mentioned when azure aks with microsoft entra_id with kubernetes rbac is enabled (or azure_rbac_enabled = true, in variable role_based_access_control)
+    azure_rbac_enabled = true
+  }]
+  aks_user_auth_role = [{
+    scope                = "/subscriptions/0**5e1cabc60c/resourceGroups/public-app-test-resource-group/providers/Microsoft.ContainerService/managedClusters/app1-test-aks1/namespaces/test"
+    role_definition_name = "Azure Kubernetes Service RBAC Admin"
+    principal_id         = "***-**-***-**-***" # user or group object id 
   }]
 
   # acr_id       = "****" #pass this value if you  want aks to pull image from acr else remove it
