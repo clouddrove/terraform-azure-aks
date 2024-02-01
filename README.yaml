@@ -68,7 +68,7 @@ usage: |-
     ]
 
     #networking
-    vnet_id         = join("", module.vnet.vnet_id)
+    vnet_id         = module.vnet.vnet_id
     nodes_subnet_id = module.subnet.default_subnet_id[0]
     # acr_id       = "****" #pass this value if you  want aks to pull image from acr else remove it
     #  key_vault_id = module.vault.id #pass this value of variable 'cmk_enabled = true' if you want to enable Encryption with a Customer-managed key else remove it.
@@ -114,11 +114,11 @@ usage: |-
     ]
 
     #networking
-    vnet_id         = join("", module.vnet.vnet_id)
+    vnet_id         = module.vnet.vnet_id
     nodes_subnet_id = module.subnet.default_subnet_id[0]
 
     # acr_id       = "****" #pass this value if you  want aks to pull image from acr else remove it
-    #  key_vault_id = module.vault.id #pass this value of variable 'cmk_enabled = true' if you want to enable Encryption with a Customer-managed key else remove it.
+    # key_vault_id = module.vault.id #pass this value of variable 'cmk_enabled = true' if you want to enable Encryption with a Customer-managed key else remove it.
 
     #### enable diagnostic setting.
     microsoft_defender_enabled = true
