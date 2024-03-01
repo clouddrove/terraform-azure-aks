@@ -24,7 +24,7 @@ output "node_resource_group" {
 }
 
 output "key_vault_secrets_provider" {
-  value = var.enabled && var.key_vault_secrets_provider_enabled ? azurerm_kubernetes_cluster.aks[0].key_vault_secrets_provider[0].secret_identity[0].object_id : null
+  value       = var.enabled && var.key_vault_secrets_provider_enabled ? azurerm_kubernetes_cluster.aks[0].key_vault_secrets_provider[0].secret_identity[0].object_id : null
   description = "Specifies the obejct id of key vault secrets provider "
 }
 
