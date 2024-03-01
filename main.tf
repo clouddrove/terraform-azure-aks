@@ -656,6 +656,13 @@ resource "azurerm_role_assignment" "aks_uai_vnet_network_contributor" {
   principal_id         = azurerm_user_assigned_identity.aks_user_assigned_identity[0].principal_id
 }
 
+resource "azurerm_role_assignment" "key_vault_secrets_provider" {
+  count             = var.enabled && var.key_vault_secrets_provider_enabled ? 1 : 0
+  scope                = var.key_vault_id
+  role_definition_name = "Key Vault Administrator"
+  principal_id         = azurerm_kubernetes_cluster.aks[0].key_vault_secrets_provider[0].secret_identity[0].object_id
+}
+
 resource "azurerm_role_assignment" "rbac_keyvault_crypto_officer" {
   for_each             = toset(var.enabled && var.cmk_enabled ? var.admin_objects_ids : [])
   scope                = var.key_vault_id
