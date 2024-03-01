@@ -298,6 +298,7 @@ Here are some examples of how you can use this module in your inventory structur
 |------|-------------|
 | aks\_system\_identity\_principal\_id | Content aks system identity's object id |
 | id | Specifies the resource id of the AKS cluster. |
+| key\_vault\_secrets\_provider | Specifies the obejct id of key vault secrets provider |
 | kube\_config\_raw | Contains the Kubernetes config to be used by kubectl and other compatible tools. |
 | name | Specifies the name of the AKS cluster. |
 | node\_resource\_group | Specifies the resource id of the auto-generated Resource Group which contains the resources for this Managed Kubernetes Cluster. |
