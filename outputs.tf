@@ -23,4 +23,8 @@ output "node_resource_group" {
   description = "Specifies the resource id of the auto-generated Resource Group which contains the resources for this Managed Kubernetes Cluster."
 }
 
+output "key_vault_secrets_provider" {
+  value       = var.enabled && var.key_vault_secrets_provider_enabled ? azurerm_kubernetes_cluster.aks[0].key_vault_secrets_provider[0].secret_identity[0].object_id : null
+  description = "Specifies the obejct id of key vault secrets provider "
+}
 
