@@ -90,7 +90,7 @@ module "vault" {
 }
 
 module "aks" {
-  source      = "../.."
+  source      = "../../"
   name        = "app1"
   environment = "test"
 
