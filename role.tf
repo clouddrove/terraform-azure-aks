@@ -10,7 +10,7 @@ resource "azurerm_role_assignment" "aks_system_identity" {
   count                = var.enabled && var.cmk_enabled ? 1 : 0
   principal_id         = azurerm_kubernetes_cluster.aks[0].identity[0].principal_id
   scope                = azurerm_disk_encryption_set.main[0].id
-  role_definition_name = "Key Vault Crypto Service Encryption User"
+  role_definition_name = "Contributor"
 }
 
 # Allow aks system indentiy access to ACR

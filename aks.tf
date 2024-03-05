@@ -18,6 +18,8 @@ resource "azurerm_kubernetes_cluster" "aks" {
   image_cleaner_interval_hours      = var.image_cleaner_interval_hours
   role_based_access_control_enabled = var.role_based_access_control_enabled
   local_account_disabled            = var.local_account_disabled
+  workload_identity_enabled         = var.workload_identity_enabled
+  oidc_issuer_enabled               = var.oidc_issuer_enabled
 
   default_node_pool {
     name                         = local.default_node_pool.agents_pool_name

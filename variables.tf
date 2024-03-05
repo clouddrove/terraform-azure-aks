@@ -63,153 +63,6 @@ variable "kubernetes_version" {
   description = "Version of Kubernetes to deploy"
 }
 
-variable "agents_pool_name" {
-  type        = string
-  default     = "nodepool"
-  description = "The default Azure AKS agentpool (nodepool) name."
-  nullable    = false
-}
-
-variable "agents_size" {
-  type        = string
-  default     = "Standard_D2s_v3"
-  description = "The default virtual machine size for the Kubernetes agents. Changing this without specifying `var.temporary_name_for_rotation` forces a new resource to be created."
-}
-
-variable "enable_auto_scaling" {
-  type        = bool
-  default     = false
-  description = "Enable node pool autoscaling"
-}
-
-variable "enable_host_encryption" {
-  type        = bool
-  default     = false
-  description = "Enable Host Encryption for default node pool. Encryption at host feature must be enabled on the subscription: https://docs.microsoft.com/azure/virtual-machines/linux/disks-enable-host-based-encryption-cli"
-}
-
-variable "enable_node_public_ip" {
-  type        = bool
-  default     = false
-  description = "(Optional) Should nodes in this Node Pool have a Public IP Address? Defaults to false."
-}
-
-variable "default_node_pool_fips_enabled" {
-  type        = bool
-  default     = null
-  description = " (Optional) Should the nodes in this Node Pool have Federal Information Processing Standard enabled? Changing this forces a new resource to be created."
-}
-
-variable "agents_max_count" {
-  type        = number
-  default     = null
-  description = "Maximum number of nodes in a pool"
-}
-
-variable "agents_max_pods" {
-  type        = number
-  default     = null
-  description = "The maximum number of pods that can run on each agent. Changing this forces a new resource to be created."
-}
-
-variable "agents_min_count" {
-  type        = number
-  default     = null
-  description = "Minimum number of nodes in a pool"
-}
-
-variable "agents_labels" {
-  type        = map(string)
-  default     = {}
-  description = "A map of Kubernetes labels which should be applied to nodes in the Default Node Pool. Changing this forces a new resource to be created."
-}
-
-variable "only_critical_addons_enabled" {
-  type        = bool
-  default     = null
-  description = "(Optional) Enabling this option will taint default node pool with `CriticalAddonsOnly=true:NoSchedule` taint. Changing this forces a new resource to be created."
-}
-
-variable "orchestrator_version" {
-  type        = string
-  default     = null
-  description = "Specify which Kubernetes release to use for the orchestration layer. The default used is the latest Kubernetes version available in the region"
-}
-
-variable "os_disk_size_gb" {
-  type        = number
-  default     = 50
-  description = "Disk size of nodes in GBs."
-}
-
-variable "os_disk_type" {
-  type        = string
-  default     = "Managed"
-  description = "The type of disk which should be used for the Operating System. Possible values are `Ephemeral` and `Managed`. Defaults to `Managed`. Changing this forces a new resource to be created."
-  nullable    = false
-}
-
-
-variable "pod_subnet_id" {
-  type        = string
-  default     = null
-  description = "(Optional) The ID of the Subnet where the pods in the default Node Pool should exist. Changing this forces a new resource to be created."
-}
-
-variable "agents_proximity_placement_group_id" {
-  type        = string
-  default     = null
-  description = "The ID of the Proximity Placement Group of the default Azure AKS agentpool (nodepool). Changing this forces a new resource to be created."
-}
-
-variable "scale_down_mode" {
-  type        = string
-  default     = "Delete"
-  description = "Specifies the autoscaling behaviour of the Kubernetes Cluster. If not specified, it defaults to `Delete`. Possible values include `Delete` and `Deallocate`. Changing this forces a new resource to be created."
-}
-
-variable "snapshot_id" {
-  type        = string
-  default     = null
-  description = "(Optional) The ID of the Snapshot which should be used to create this default Node Pool. `temporary_name_for_rotation` must be specified when changing this property."
-}
-
-variable "tags" {
-  type        = map(string)
-  default     = {}
-  description = "Any tags that should be present on the AKS cluster resources"
-}
-
-variable "agents_tags" {
-  type        = map(string)
-  default     = {}
-  description = "A mapping of tags to assign to the Node Pool."
-}
-
-variable "temporary_name_for_rotation" {
-  type        = string
-  default     = null
-  description = "Specifies the name of the temporary node pool used to cycle the default node pool for VM resizing. the `var.agents_size` is no longer ForceNew and can be resized by specifying `temporary_name_for_rotation`"
-}
-
-variable "agents_type" {
-  type        = string
-  default     = "VirtualMachineScaleSets"
-  description = "(Optional) The type of Node Pool which should be created. Possible values are AvailabilitySet and VirtualMachineScaleSets. Defaults to VirtualMachineScaleSets."
-}
-
-variable "ultra_ssd_enabled" {
-  type        = bool
-  default     = false
-  description = "(Optional) Used to specify whether the UltraSSD is enabled in the Default Node Pool. Defaults to false."
-}
-
-variable "vnet_subnet_id" {
-  type        = string
-  default     = null
-  description = "(Optional) The ID of a Subnet where the Kubernetes Node Pool should exist. Changing this forces a new resource to be created."
-}
-
 variable "agents_availability_zones" {
   type        = list(string)
   default     = null
@@ -827,12 +680,6 @@ variable "automatic_channel_upgrade" {
   description = "(Optional) The upgrade channel for this Kubernetes Cluster. Possible values are `patch`, `rapid`, `node-image` and `stable`. By default automatic-upgrades are turned off. Note that you cannot specify the patch version using `kubernetes_version` or `orchestrator_version` when using the `patch` upgrade channel. See [the documentation](https://learn.microsoft.com/en-us/azure/aks/auto-upgrade-cluster) for more information"
 }
 
-variable "dns_prefix" {
-  type        = string
-  default     = null
-  description = ""
-}
-
 variable "agents_pool_kubelet_configs" {
   type = list(object({
     cpu_manager_policy        = optional(string)
@@ -881,6 +728,19 @@ variable "nodes_subnet_id" {
   default     = null
   description = "Id of the subnet used for nodes"
 }
+
+variable "workload_identity_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable workload identity for application."
+}
+
+variable "oidc_issuer_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable OIDC Issuer."
+}
+
 
 ##-----------------------------------------------------------------------------
 ## DIAGNOSTIC VARIABLE
@@ -974,11 +834,6 @@ variable "workload_runtime" {
   default     = null
   description = "Used to specify the workload runtime. Allowed values are OCIContainer, WasmWasi and KataMshvVmIsolation."
 }
-variable "os_sku" {
-  type        = string
-  default     = null
-  description = "(Optional) Specifies the OS SKU used by the agent pool. Possible values include: `Ubuntu`, `CBLMariner`, `Mariner`, `Windows2019`, `Windows2022`. If not specified, the default is `Ubuntu` if OSType=Linux or `Windows2019` if OSType=Windows. And the default Windows OSSKU will be changed to `Windows2022` after Windows2019 is deprecated. Changing this forces a new resource to be created."
-}
 
 variable "kubelet_config" {
   type = object({
@@ -1009,33 +864,6 @@ variable "nodes_pools" {
   description = "A list of nodes pools to create, each item supports same properties as `local.default_agent_profile`"
 }
 
-
-variable "default_node_pool" {
-  description = <<EOD
-Default node pool configuration:
-```
-map(object({
-    name                  = string
-    count                 = number
-    vm_size               = string
-    os_type               = string
-    availability_zones    = list(number)
-    enable_auto_scaling   = bool
-    min_count             = number
-    max_count             = number
-    type                  = string
-    vnet_subnet_id        = string
-    max_pods              = number
-    os_disk_type          = string
-    os_disk_size_gb       = number
-    enable_node_public_ip = bool
-}))
-```
-EOD
-
-  type    = map(any)
-  default = {}
-}
 
 ##-----------------------------------------------------------------------------
 ## IAM_ROLE VARIABLE
