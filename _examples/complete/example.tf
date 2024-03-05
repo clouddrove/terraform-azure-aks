@@ -100,7 +100,6 @@ module "aks" {
   kubernetes_version      = "1.27.7"
   private_cluster_enabled = false
 
-
   ##### if requred more than one node group.
   nodes_pools = [
     {
