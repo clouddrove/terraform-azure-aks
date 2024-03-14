@@ -165,3 +165,17 @@ resource "azurerm_key_vault_access_policy" "kubelet_identity" {
   certificate_permissions = ["Get"]
   secret_permissions      = ["Get"]
 }
+
+resource "azurerm_role_assignment" "aks_system_object_id" {
+  count                = var.enabled ? 1 : 0
+  principal_id         = azurerm_kubernetes_cluster.aks[0].identity[0].principal_id
+  scope                = var.vnet_id
+  role_definition_name = "Network Contributor"
+}
+
+resource "azurerm_role_assignment" "key_vault_secrets_provider" {
+  count                = var.enabled && var.key_vault_secrets_provider_enabled ? 1 : 0
+  scope                = var.key_vault_id
+  role_definition_name = "Key Vault Administrator"
+  principal_id         = azurerm_kubernetes_cluster.aks[0].key_vault_secrets_provider[0].secret_identity[0].object_id
+}

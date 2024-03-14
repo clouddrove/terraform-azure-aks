@@ -100,6 +100,15 @@ module "aks" {
   kubernetes_version      = "1.27.7"
   private_cluster_enabled = false
 
+  default_node_pool = {
+    name                  = "agentpool1"
+    max_pods              = 200
+    os_disk_size_gb       = 64
+    vm_size               = "Standard_B4ms"
+    count                 = 1
+    enable_node_public_ip = false
+  }
+
 
   ##### if requred more than one node group.
   nodes_pools = [

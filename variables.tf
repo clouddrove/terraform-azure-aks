@@ -741,6 +741,33 @@ variable "oidc_issuer_enabled" {
   description = "Enable OIDC Issuer."
 }
 
+variable "default_node_pool" {
+  description = <<EOD
+Default node pool configuration:
+```
+map(object({
+    name                  = string
+    count                 = number
+    vm_size               = string
+    os_type               = string
+    availability_zones    = list(number)
+    enable_auto_scaling   = bool
+    min_count             = number
+    max_count             = number
+    type                  = string
+    vnet_subnet_id        = string
+    max_pods              = number
+    os_disk_type          = string
+    os_disk_size_gb       = number
+    enable_node_public_ip = bool
+}))
+```
+EOD
+
+  type    = map(any)
+  default = {}
+}
+
 
 ##-----------------------------------------------------------------------------
 ## DIAGNOSTIC VARIABLE

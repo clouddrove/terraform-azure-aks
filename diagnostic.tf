@@ -27,16 +27,7 @@ resource "azurerm_monitor_diagnostic_setting" "aks_diag" {
     ignore_changes = [log_analytics_destination_type]
   }
 }
-data "azurerm_resources" "aks_pip" {
-  depends_on = [azurerm_kubernetes_cluster.aks, azurerm_kubernetes_cluster_node_pool.node_pools]
-  count      = var.enabled && var.diagnostic_setting_enable ? 1 : 0
-  type       = "Microsoft.Network/publicIPAddresses"
-  required_tags = {
-    Environment = var.environment
-    Name        = module.labels.id
-    Repository  = var.repository
-  }
-}
+
 resource "azurerm_monitor_diagnostic_setting" "pip_aks" {
   depends_on                     = [data.azurerm_resources.aks_pip, azurerm_kubernetes_cluster.aks, azurerm_kubernetes_cluster_node_pool.node_pools]
   count                          = var.enabled && var.diagnostic_setting_enable ? 1 : 0
@@ -68,16 +59,7 @@ resource "azurerm_monitor_diagnostic_setting" "pip_aks" {
   }
 }
 
-data "azurerm_resources" "aks_nsg" {
-  depends_on = [data.azurerm_resources.aks_nsg, azurerm_kubernetes_cluster.aks, azurerm_kubernetes_cluster_node_pool.node_pools]
-  count      = var.enabled && var.diagnostic_setting_enable ? 1 : 0
-  type       = "Microsoft.Network/networkSecurityGroups"
-  required_tags = {
-    Environment = var.environment
-    Name        = module.labels.id
-    Repository  = var.repository
-  }
-}
+
 resource "azurerm_monitor_diagnostic_setting" "aks-nsg" {
   depends_on                     = [data.azurerm_resources.aks_nsg, azurerm_kubernetes_cluster.aks]
   count                          = var.enabled && var.diagnostic_setting_enable ? 1 : 0
@@ -99,17 +81,6 @@ resource "azurerm_monitor_diagnostic_setting" "aks-nsg" {
 
   lifecycle {
     ignore_changes = [log_analytics_destination_type]
-  }
-}
-
-data "azurerm_resources" "aks_nic" {
-  depends_on = [azurerm_kubernetes_cluster.aks]
-  count      = var.enabled && var.diagnostic_setting_enable && var.private_cluster_enabled == true ? 1 : 0
-  type       = "Microsoft.Network/networkInterfaces"
-  required_tags = {
-    Environment = var.environment
-    Name        = module.labels.id
-    Repository  = var.repository
   }
 }
 

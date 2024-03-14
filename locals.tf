@@ -8,6 +8,7 @@ data "azurerm_client_config" "current" {}
 
 
 locals {
+  private_dns_zone    = var.private_dns_zone_type == "Custom" ? var.private_dns_zone_id : var.private_dns_zone_type
   resource_group_name = var.resource_group_name
   location            = var.location
   default_node_pool = {
@@ -57,6 +58,7 @@ locals {
     max_pods        = 20
     os_disk_size_gb = 256
   }
+
 }
 
 module "labels" {
@@ -70,6 +72,39 @@ module "labels" {
   repository  = var.repository
 }
 
-locals {
-  private_dns_zone = var.private_dns_zone_type == "Custom" ? var.private_dns_zone_id : var.private_dns_zone_type
+##-----------------------------------------------------------------------------
+## DATA BLOCKS FOR DIAGNOSTIC.TF
+##-----------------------------------------------------------------------------
+data "azurerm_resources" "aks_pip" {
+  depends_on = [azurerm_kubernetes_cluster.aks, azurerm_kubernetes_cluster_node_pool.node_pools]
+  count      = var.enabled && var.diagnostic_setting_enable ? 1 : 0
+  type       = "Microsoft.Network/publicIPAddresses"
+  required_tags = {
+    Environment = var.environment
+    Name        = module.labels.id
+    Repository  = var.repository
+  }
+}
+
+data "azurerm_resources" "aks_nsg" {
+  depends_on = [data.azurerm_resources.aks_nsg, azurerm_kubernetes_cluster.aks, azurerm_kubernetes_cluster_node_pool.node_pools]
+  count      = var.enabled && var.diagnostic_setting_enable ? 1 : 0
+  type       = "Microsoft.Network/networkSecurityGroups"
+  required_tags = {
+    Environment = var.environment
+    Name        = module.labels.id
+    Repository  = var.repository
+  }
+}
+
+
+data "azurerm_resources" "aks_nic" {
+  depends_on = [azurerm_kubernetes_cluster.aks]
+  count      = var.enabled && var.diagnostic_setting_enable && var.private_cluster_enabled == true ? 1 : 0
+  type       = "Microsoft.Network/networkInterfaces"
+  required_tags = {
+    Environment = var.environment
+    Name        = module.labels.id
+    Repository  = var.repository
+  }
 }
