@@ -98,11 +98,12 @@ module "aks" {
   location            = module.resource_group.resource_group_location
 
   kubernetes_version = "1.27"
+
   default_node_pool = {
-    name                  = "agentpool"
+    name                  = "agentpool1"
     max_pods              = 200
     os_disk_size_gb       = 64
-    vm_size               = "Standard_B2s"
+    vm_size               = "Standard_B4ms"
     count                 = 1
     enable_node_public_ip = false
   }
