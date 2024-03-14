@@ -7,7 +7,7 @@ module "resource_group" {
   source  = "clouddrove/resource-group/azure"
   version = "1.0.2"
 
-  name        = "aks-app"
+  name        = "Public-app"
   environment = "test"
   label_order = ["name", "environment", ]
   location    = "Canada Central"
@@ -65,7 +65,7 @@ module "log-analytics" {
 module "vault" {
   source  = "clouddrove/key-vault/azure"
   version = "1.1.0"
-  name    = "vakstest"
+  name    = "appakstest"
   #environment         = local.environment
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
