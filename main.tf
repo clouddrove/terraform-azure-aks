@@ -607,7 +607,7 @@ resource "azurerm_role_assignment" "aks_system_identity" {
   count                = var.enabled && var.cmk_enabled ? 1 : 0
   principal_id         = azurerm_kubernetes_cluster.aks[0].identity[0].principal_id
   scope                = azurerm_disk_encryption_set.main[0].id
-  role_definition_name = "Key Vault Crypto Service Encryption User"
+  role_definition_name = "Contributor"
 }
 
 # Allow aks system indentiy access to ACR
@@ -630,6 +630,13 @@ resource "azurerm_role_assignment" "aks_user_assigned" {
   count                = var.enabled ? 1 : 0
   principal_id         = azurerm_kubernetes_cluster.aks[0].kubelet_identity[0].object_id
   scope                = format("/subscriptions/%s/resourceGroups/%s", data.azurerm_subscription.current.subscription_id, azurerm_kubernetes_cluster.aks[0].node_resource_group)
+  role_definition_name = "Network Contributor"
+}
+
+resource "azurerm_role_assignment" "aks_system_object_id" {
+  count                = var.enabled ? 1 : 0
+  principal_id         = azurerm_kubernetes_cluster.aks[0].identity[0].principal_id
+  scope                = var.vnet_id
   role_definition_name = "Network Contributor"
 }
 

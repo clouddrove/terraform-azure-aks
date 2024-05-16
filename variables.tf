@@ -1066,7 +1066,7 @@ variable "admin_group_id" {
 
 variable "expiration_date" {
   type        = string
-  default     = "2024-05-22T18:29:59Z"
+  default     = "2026-08-12T16:17:25Z"
   description = "Expiration UTC datetime (Y-m-d'T'H:M:S'Z')"
 }
 

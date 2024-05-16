@@ -65,7 +65,7 @@ module "log-analytics" {
 module "vault" {
   source  = "clouddrove/key-vault/azure"
   version = "1.1.0"
-  name    = "apptestwvshaks"
+  name    = "appte18wvshaks"
   #environment         = local.environment
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
@@ -127,18 +127,18 @@ module "aks" {
 
   ## Microsoft entra_id integration
   local_account_disabled = true
-  admin_group_id         = ["***ed"]
+  admin_group_id         = ["a9379ef2-6dae-4ef5-8e17-0b91c48a0ad6"]
   role_based_access_control = [{
     managed   = true
-    tenant_id = "b****f7bdd" ## To be mentioned when azure aks with microsoft entra_id with kubernetes rbac is enabled (or azure_rbac_enabled = true, in variable role_based_access_control)
+    tenant_id = "bcffb719-9620-4b7c-b1b0-87ebfb2f7bdd" ## To be mentioned when azure aks with microsoft entra_id with kubernetes rbac is enabled (or azure_rbac_enabled = true, in variable role_based_access_control)
     #admin_group_object_ids = ["*****-b3da-46c5-b672-fbc9bf0b****"] ## To be mentioned when azure aks with microsoft entra_id with kubernetes rbac is enabled (or azure_rbac_enabled = true, in variable role_based_access_control)
     azure_rbac_enabled = true
   }]
-  aks_user_auth_role = [{
-    scope                = "/subscriptions/0**5e1cabc60c/resourceGroups/public-app-test-resource-group/providers/Microsoft.ContainerService/managedClusters/app1-test-aks1/namespaces/test"
-    role_definition_name = "Azure Kubernetes Service RBAC Admin"
-    principal_id         = "***-**-***-**-***" # user or group object id 
-  }]
+  # aks_user_auth_role = [{
+  #   scope                = "/subscriptions/0**5e1cabc60c/resourceGroups/public-app-test-resource-group/providers/Microsoft.ContainerService/managedClusters/app1-test-aks1/namespaces/test"
+  #   role_definition_name = "Azure Kubernetes Service RBAC Admin"
+  #   principal_id         = "***-**-***-**-***" # user or group object id 
+  # }]
 
   # acr_id       = "****" #pass this value if you  want aks to pull image from acr else remove it
   key_vault_id      = module.vault.id #pass this value of variable 'cmk_enabled = true' if you want to enable Encryption with a Customer-managed key else remove it.
@@ -148,4 +148,12 @@ module "aks" {
   microsoft_defender_enabled = true
   diagnostic_setting_enable  = true
   log_analytics_workspace_id = module.log-analytics.workspace_id # when diagnostic_setting_enable = true && oms_agent_enabled = true
+
+enable_adddons = true
+istio_manifests = {
+  istio_gateway_manifest_file_path = ["./config/istio/gateway.yaml"]
+  }
+kubecost_manifests = {
+  kubecost_vs_manifest_file_path = ["./config/kubecost/vs.yaml"]
+}
 }

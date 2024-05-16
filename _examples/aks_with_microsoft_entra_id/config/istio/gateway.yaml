@@ -1,0 +1,16 @@
+# -- Make sure to use same Namespace for Gateway, Ingress & var.istio_ingress_extra_configs["namespace"], default namespace is set to `istio-system`.
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: istio-ingress
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingress
+  servers:
+  - hosts:
+    - "*.example.com"
+    port:
+      number: 80
+      name: http
+      protocol: HTTP

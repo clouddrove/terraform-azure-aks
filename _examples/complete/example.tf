@@ -7,7 +7,7 @@ module "resource_group" {
   source  = "clouddrove/resource-group/azure"
   version = "1.0.2"
 
-  name        = "Public-app"
+  name        = "Public-app-aks"
   environment = "test"
   label_order = ["name", "environment", ]
   location    = "Canada Central"
@@ -65,7 +65,7 @@ module "log-analytics" {
 module "vault" {
   source  = "clouddrove/key-vault/azure"
   version = "1.1.0"
-  name    = "appakstest"
+  name    = "appak061stestddw"
   #environment         = local.environment
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
@@ -133,4 +133,13 @@ module "aks" {
   microsoft_defender_enabled = true
   diagnostic_setting_enable  = true
   log_analytics_workspace_id = module.log-analytics.workspace_id # when diagnostic_setting_enable = true && oms_agent_enabled = true
+
+  #addons 
+  enable_adddons = true
+istio_manifests = {
+  istio_gateway_manifest_file_path = ["./config/istio/gateway.yaml"]
+  }
+kubecost_manifests = {
+  kubecost_vs_manifest_file_path = ["./config/kubecost/vs.yaml"]
+}
 }

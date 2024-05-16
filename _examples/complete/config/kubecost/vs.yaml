@@ -1,0 +1,19 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: kubecost-dashboard
+  namespace: addons
+spec:
+  gateways:
+    - istio-system/istio-ingress
+  hosts:
+    - kubecost.example.com
+  http:
+  - match:
+    - uri:
+        prefix: "/"
+    route:
+    - destination:
+        host: "kubecost-cost-analyzer"
+        port:
+          number: 9090
