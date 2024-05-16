@@ -127,10 +127,10 @@ module "aks" {
 
   ## Microsoft entra_id integration
   local_account_disabled = true
-  admin_group_id         = ["a9379ef2-6dae-4ef5-8e17-0b91c48a0ad6"]
+  admin_group_id         = ["a9***d6"]
   role_based_access_control = [{
     managed   = true
-    tenant_id = "bcffb719-9620-4b7c-b1b0-87ebfb2f7bdd" ## To be mentioned when azure aks with microsoft entra_id with kubernetes rbac is enabled (or azure_rbac_enabled = true, in variable role_based_access_control)
+    tenant_id = "bc**d" ## To be mentioned when azure aks with microsoft entra_id with kubernetes rbac is enabled (or azure_rbac_enabled = true, in variable role_based_access_control)
     #admin_group_object_ids = ["*****-b3da-46c5-b672-fbc9bf0b****"] ## To be mentioned when azure aks with microsoft entra_id with kubernetes rbac is enabled (or azure_rbac_enabled = true, in variable role_based_access_control)
     azure_rbac_enabled = true
   }]
