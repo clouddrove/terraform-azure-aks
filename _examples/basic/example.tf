@@ -11,6 +11,15 @@ module "aks" {
   location            = "Central India"
 
   kubernetes_version = "1.27"
+  default_node_pool = {
+    name                  = "agentpool"
+    max_pods              = 200
+    os_disk_size_gb       = 64
+    vm_size               = "Standard_B2s"
+    count                 = 1
+    enable_node_public_ip = false
+  }
+
 
   ##### if requred more than one node group.
   nodes_pools = [
@@ -22,7 +31,7 @@ module "aks" {
       count                 = 2
       enable_node_public_ip = false
       mode                  = "User"
-    }
+    },
   ]
 
   #networking
