@@ -90,7 +90,7 @@ module "vault" {
 }
 
 module "aks" {
-  source      = "../../"
+  source      = "../.."
   name        = "app1"
   environment = "test"
 
@@ -99,7 +99,6 @@ module "aks" {
 
   kubernetes_version      = "1.27.7"
   private_cluster_enabled = false
-
   default_node_pool = {
     name                  = "agentpool1"
     max_pods              = 200
