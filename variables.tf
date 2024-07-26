@@ -511,7 +511,7 @@ variable "storage_profile" {
 
 variable "web_app_routing" {
   type = object({
-    dns_zone_id = string
+    dns_zone_ids = list(string)
   })
   default     = null
   description = <<-EOT
@@ -625,7 +625,7 @@ variable "net_profile_pod_cidr" {
   description = " (Optional) The CIDR to use for pod IP addresses. This field can only be set when network_plugin is set to kubenet. Changing this forces a new resource to be created."
 }
 
-variable "ebpf_data_plane" {
+variable "network_data_plane" {
   type        = string
   default     = null
   description = "(Optional) Specifies the eBPF data plane used for building the Kubernetes network. Possible value is `cilium`. Changing this forces a new resource to be created."
