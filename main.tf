@@ -410,7 +410,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
     for_each = var.web_app_routing == null ? [] : ["web_app_routing"]
 
     content {
-      dns_zone_id = var.web_app_routing.dns_zone_id
+      dns_zone_ids = var.web_app_routing.dns_zone_ids
     }
   }
 
@@ -469,7 +469,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
   network_profile {
     network_plugin      = var.network_plugin
     network_policy      = var.network_policy
-    ebpf_data_plane     = var.ebpf_data_plane
+    network_data_plane  = var.network_data_plane
     dns_service_ip      = cidrhost(var.service_cidr, 10)
     service_cidr        = var.service_cidr
     load_balancer_sku   = var.load_balancer_sku
