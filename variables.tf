@@ -197,7 +197,7 @@ variable "agents_tags" {
 
 variable "temporary_name_for_rotation" {
   type        = string
-  default     = null
+  default     = "tempnode"
   description = "Specifies the name of the temporary node pool used to cycle the default node pool for VM resizing. the `var.agents_size` is no longer ForceNew and can be resized by specifying `temporary_name_for_rotation`"
 }
 
