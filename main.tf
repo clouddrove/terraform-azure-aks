@@ -12,11 +12,11 @@ locals {
   location            = var.location
   default_agent_profile = {
     name                   = "agentpool"
-    count                  = 1
+    count                  = null
     vm_size                = "Standard_D2_v3"
     os_type                = "Linux"
     enable_auto_scaling    = false
-    enable_host_encryption = false
+    enable_host_encryption = true
     min_count              = null
     max_count              = null
     type                   = "VirtualMachineScaleSets"
@@ -344,17 +344,20 @@ resource "azurerm_kubernetes_cluster" "aks" {
     }
   }
   default_node_pool {
-    name                = local.default_node_pool.name
-    node_count          = local.default_node_pool.count
-    vm_size             = local.default_node_pool.vm_size
-    enable_auto_scaling = local.default_node_pool.enable_auto_scaling
-    min_count           = local.default_node_pool.min_count
-    max_count           = local.default_node_pool.max_count
-    max_pods            = local.default_node_pool.max_pods
-    os_disk_type        = local.default_node_pool.os_disk_type
-    os_disk_size_gb     = local.default_node_pool.os_disk_size_gb
-    type                = local.default_node_pool.type
-    vnet_subnet_id      = local.default_node_pool.vnet_subnet_id
+    name                        = local.default_node_pool.name
+    node_count                  = local.default_node_pool.count
+    vm_size                     = local.default_node_pool.vm_size
+    enable_auto_scaling         = local.default_node_pool.enable_auto_scaling
+    min_count                   = local.default_node_pool.min_count
+    max_count                   = local.default_node_pool.max_count
+    max_pods                    = local.default_node_pool.max_pods
+    os_disk_type                = local.default_node_pool.os_disk_type
+    os_disk_size_gb             = local.default_node_pool.os_disk_size_gb
+    type                        = local.default_node_pool.type
+    vnet_subnet_id              = local.default_node_pool.vnet_subnet_id
+    temporary_name_for_rotation = var.temporary_name_for_rotation
+    enable_host_encryption      = local.default_node_pool.enable_host_encryption
+
   }
 
   dynamic "microsoft_defender" {
