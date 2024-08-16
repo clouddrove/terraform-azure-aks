@@ -12,7 +12,7 @@ locals {
   location            = var.location
   default_agent_profile = {
     name                          = "agentpool"
-    count                         = null
+    count                         = 1
     vm_size                       = "Standard_D2_v3"
     os_type                       = "Linux"
     enable_auto_scaling           = false
@@ -180,15 +180,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
               vm_vfs_cache_pressure              = sysctl_config.value.vm_vfs_cache_pressure
             }
           }
-        }
-      }
-      dynamic "upgrade_settings" {
-        for_each = local.default_node_pool.max_surge == null ? [] : ["upgrade_settings"]
-
-        content {
-          max_surge                     = local.default_node_pool.max_surge
-          node_soak_duration_in_minutes = local.default_node_pool.node_soak_duration_in_minutes
-          drain_timeout_in_minutes      = local.default_node_pool.drain_timeout_in_minutes
         }
       }
     }
@@ -362,6 +353,15 @@ resource "azurerm_kubernetes_cluster" "aks" {
     vnet_subnet_id              = local.default_node_pool.vnet_subnet_id
     temporary_name_for_rotation = var.temporary_name_for_rotation
     enable_host_encryption      = local.default_node_pool.enable_host_encryption
+    dynamic "upgrade_settings" {
+      for_each = local.default_node_pool.max_surge == null ? [] : ["upgrade_settings"]
+
+      content {
+        max_surge                     = local.default_node_pool.max_surge
+        node_soak_duration_in_minutes = local.default_node_pool.node_soak_duration_in_minutes
+        drain_timeout_in_minutes      = local.default_node_pool.drain_timeout_in_minutes
+      }
+    }
   }
 
   dynamic "microsoft_defender" {
