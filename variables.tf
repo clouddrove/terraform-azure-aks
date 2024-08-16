@@ -304,12 +304,6 @@ EOT
   nullable    = false
 }
 
-variable "agents_pool_max_surge" {
-  type        = string
-  default     = null
-  description = "The maximum number or percentage of nodes which will be added to the Default Node Pool size during an upgrade."
-}
-
 variable "aci_connector_linux_enabled" {
   type        = bool
   default     = false
