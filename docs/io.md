@@ -119,7 +119,7 @@
 | storage\_profile | Storage profile configuration | <pre>object({<br>    enabled                     = bool<br>    blob_driver_enabled         = bool<br>    disk_driver_enabled         = bool<br>    disk_driver_version         = string<br>    file_driver_enabled         = bool<br>    snapshot_controller_enabled = bool<br>  })</pre> | <pre>{<br>  "blob_driver_enabled": false,<br>  "disk_driver_enabled": true,<br>  "disk_driver_version": "v1",<br>  "enabled": false,<br>  "file_driver_enabled": true,<br>  "snapshot_controller_enabled": true<br>}</pre> | no |
 | storage\_profile\_enabled | Enable storage profile | `bool` | `false` | no |
 | tags | Any tags that should be present on the AKS cluster resources | `map(string)` | `{}` | no |
-| temporary\_name\_for\_rotation | Specifies the name of the temporary node pool used to cycle the default node pool for VM resizing. the `var.agents_size` is no longer ForceNew and can be resized by specifying `temporary_name_for_rotation` | `string` | `null` | no |
+| temporary\_name\_for\_rotation | Specifies the name of the temporary node pool used to cycle the default node pool for VM resizing. the `var.agents_size` is no longer ForceNew and can be resized by specifying `temporary_name_for_rotation` | `string` | `"tempnode"` | no |
 | ultra\_ssd\_enabled | (Optional) Used to specify whether the UltraSSD is enabled in the Default Node Pool. Defaults to false. | `bool` | `false` | no |
 | vnet\_id | Vnet id that Aks MSI should be network contributor in a private cluster | `string` | `null` | no |
 | vnet\_subnet\_id | (Optional) The ID of a Subnet where the Kubernetes Node Pool should exist. Changing this forces a new resource to be created. | `string` | `null` | no |
