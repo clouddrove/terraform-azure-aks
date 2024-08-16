@@ -11,24 +11,27 @@ locals {
   resource_group_name = var.resource_group_name
   location            = var.location
   default_agent_profile = {
-    name                   = "agentpool"
-    count                  = 1
-    vm_size                = "Standard_D2_v3"
-    os_type                = "Linux"
-    enable_auto_scaling    = false
-    enable_host_encryption = false
-    min_count              = null
-    max_count              = null
-    type                   = "VirtualMachineScaleSets"
-    node_taints            = null
-    vnet_subnet_id         = var.nodes_subnet_id
-    max_pods               = 30
-    os_disk_type           = "Managed"
-    os_disk_size_gb        = 128
-    host_group_id          = null
-    orchestrator_version   = null
-    enable_node_public_ip  = false
-    mode                   = "System"
+    name                          = "agentpool"
+    count                         = null
+    vm_size                       = "Standard_D2_v3"
+    os_type                       = "Linux"
+    enable_auto_scaling           = false
+    enable_host_encryption        = true
+    min_count                     = null
+    max_count                     = null
+    type                          = "VirtualMachineScaleSets"
+    node_taints                   = null
+    vnet_subnet_id                = var.nodes_subnet_id
+    max_pods                      = 30
+    os_disk_type                  = "Managed"
+    os_disk_size_gb               = 128
+    host_group_id                 = null
+    orchestrator_version          = null
+    enable_node_public_ip         = false
+    mode                          = "System"
+    node_soak_duration_in_minutes = null
+    max_surge                     = null
+    drain_timeout_in_minutes      = null
   }
 
   default_node_pool         = merge(local.default_agent_profile, var.default_node_pool)
@@ -180,10 +183,12 @@ resource "azurerm_kubernetes_cluster" "aks" {
         }
       }
       dynamic "upgrade_settings" {
-        for_each = var.agents_pool_max_surge == null ? [] : ["upgrade_settings"]
+        for_each = local.default_node_pool.max_surge == null ? [] : ["upgrade_settings"]
 
         content {
-          max_surge = var.agents_pool_max_surge
+          max_surge                     = local.default_node_pool.max_surge
+          node_soak_duration_in_minutes = local.default_node_pool.node_soak_duration_in_minutes
+          drain_timeout_in_minutes      = local.default_node_pool.drain_timeout_in_minutes
         }
       }
     }
@@ -344,17 +349,19 @@ resource "azurerm_kubernetes_cluster" "aks" {
     }
   }
   default_node_pool {
-    name                = local.default_node_pool.name
-    node_count          = local.default_node_pool.count
-    vm_size             = local.default_node_pool.vm_size
-    enable_auto_scaling = local.default_node_pool.enable_auto_scaling
-    min_count           = local.default_node_pool.min_count
-    max_count           = local.default_node_pool.max_count
-    max_pods            = local.default_node_pool.max_pods
-    os_disk_type        = local.default_node_pool.os_disk_type
-    os_disk_size_gb     = local.default_node_pool.os_disk_size_gb
-    type                = local.default_node_pool.type
-    vnet_subnet_id      = local.default_node_pool.vnet_subnet_id
+    name                        = local.default_node_pool.name
+    node_count                  = local.default_node_pool.count
+    vm_size                     = local.default_node_pool.vm_size
+    enable_auto_scaling         = local.default_node_pool.enable_auto_scaling
+    min_count                   = local.default_node_pool.min_count
+    max_count                   = local.default_node_pool.max_count
+    max_pods                    = local.default_node_pool.max_pods
+    os_disk_type                = local.default_node_pool.os_disk_type
+    os_disk_size_gb             = local.default_node_pool.os_disk_size_gb
+    type                        = local.default_node_pool.type
+    vnet_subnet_id              = local.default_node_pool.vnet_subnet_id
+    temporary_name_for_rotation = var.temporary_name_for_rotation
+    enable_host_encryption      = local.default_node_pool.enable_host_encryption
   }
 
   dynamic "microsoft_defender" {
@@ -583,10 +590,12 @@ resource "azurerm_kubernetes_cluster_node_pool" "node_pools" {
     }
   }
   dynamic "upgrade_settings" {
-    for_each = var.agents_pool_max_surge == null ? [] : ["upgrade_settings"]
+    for_each = local.nodes_pools[count.index].max_surge == null ? [] : ["upgrade_settings"]
 
     content {
-      max_surge = var.agents_pool_max_surge
+      max_surge                     = local.nodes_pools[count.index].max_surge
+      node_soak_duration_in_minutes = local.nodes_pools[count.index].node_soak_duration_in_minutes
+      drain_timeout_in_minutes      = local.nodes_pools[count.index].drain_timeout_in_minutes
     }
   }
 
