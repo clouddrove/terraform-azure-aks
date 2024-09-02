@@ -106,6 +106,7 @@ module "aks" {
     vm_size               = "Standard_B4ms"
     count                 = 1
     enable_node_public_ip = false
+    max_surge             = "33%"
   }
 
   ##### if requred more than one node group.
@@ -118,6 +119,7 @@ module "aks" {
       count                 = 2
       enable_node_public_ip = false
       mode                  = "User"
+      max_surge             = "33%"
     },
   ]
 
