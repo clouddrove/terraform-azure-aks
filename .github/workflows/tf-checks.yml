@@ -12,7 +12,7 @@ jobs:
   complete-example:
     uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.1
     with:
-      working_directory: './examples/complete/'    
+      working_directory: './examples/complete/'
   private_cluster-example:
     uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.1
     with:
@@ -24,4 +24,4 @@ jobs:
   aks_with_microsoft_entra_id-example:
     uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.1
     with:
-      working_directory: './examples/aks_with_microsoft_entra_id/'    
+      working_directory: './examples/aks_with_microsoft_entra_id/'

@@ -126,5 +126,3 @@ usage: |-
     log_analytics_workspace_id = module.log-analytics.workspace_id # when diagnostic_setting_enable = true && oms_agent_enabled = true
   }
     ```
-
-

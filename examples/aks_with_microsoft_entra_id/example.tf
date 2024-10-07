@@ -137,7 +137,7 @@ module "aks" {
   aks_user_auth_role = [{
     scope                = "/subscriptions/0**5e1cabc60c/resourceGroups/public-app-test-resource-group/providers/Microsoft.ContainerService/managedClusters/app1-test-aks1/namespaces/test"
     role_definition_name = "Azure Kubernetes Service RBAC Admin"
-    principal_id         = "***-**-***-**-***" # user or group object id 
+    principal_id         = "***-**-***-**-***" # user or group object id
   }]
 
   # acr_id       = "****" #pass this value if you  want aks to pull image from acr else remove it

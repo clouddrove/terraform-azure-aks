@@ -912,10 +912,10 @@ resource "azurerm_monitor_diagnostic_setting" "aks-nic" {
   }
 }
 
-## AKS user authentication with Azure Rbac. 
+## AKS user authentication with Azure Rbac.
 resource "azurerm_role_assignment" "example" {
   for_each = var.enabled && var.aks_user_auth_role != null ? { for k in var.aks_user_auth_role : k.principal_id => k } : null
-  # scope                = 
+  # scope                =
   scope                = each.value.scope
   role_definition_name = each.value.role_definition_name
   principal_id         = each.value.principal_id
