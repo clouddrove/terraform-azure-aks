@@ -137,4 +137,3 @@
 | kube\_config\_raw | Contains the Kubernetes config to be used by kubectl and other compatible tools. |
 | name | Specifies the name of the AKS cluster. |
 | node\_resource\_group | Specifies the resource id of the auto-generated Resource Group which contains the resources for this Managed Kubernetes Cluster. |
-
