@@ -1,11 +1,11 @@
 provider "azurerm" {
   features {}
-  subscription_id = "068245d4-3c94-42fe-9c4d-9e5e1cabc60c"
+  subscription_id = "000000-11111-1223-XXX-XXXXXXXXXXXX"
 }
 provider "azurerm" {
   features {}
   alias           = "peer"
-  subscription_id = "068245d4-3c94-42fe-9c4d-9e5e1cabc60c"
+  subscription_id = "000000-11111-1223-XXX-XXXXXXXXXXXX"
 }
 
 data "azurerm_client_config" "current_client_config" {}
