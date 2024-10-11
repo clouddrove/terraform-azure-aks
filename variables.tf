@@ -154,6 +154,18 @@ variable "agents_pool_max_surge" {
   description = "The maximum number or percentage of nodes which will be added to the Default Node Pool size during an upgrade."
 }
 
+variable "agents_pool_node_soak_duration_in_minutes" {
+  type        = number
+  default     = 0
+  description = "(Optional) The amount of time in minutes to wait after draining a node and before reimaging and moving on to next node. Defaults to 0."
+}
+
+variable "agents_pool_drain_timeout_in_minutes" {
+  type        = number
+  default     = null
+  description = "(Optional) The amount of time in minutes to wait on eviction of pods and graceful termination per node. This eviction wait time honors waiting on pod disruption budgets. If this time is exceeded, the upgrade fails. Unsetting this after configuring it will force a new resource to be created."
+}
+
 variable "aci_connector_linux_enabled" {
   type        = bool
   default     = false
@@ -242,7 +254,7 @@ variable "microsoft_defender_enabled" {
 
 variable "oms_agent_enabled" {
   type        = bool
-  default     = true
+  default     = false
   description = "Enable log_analytics_workspace_enabled(oms agent) Addon."
 }
 
@@ -251,12 +263,14 @@ variable "service_mesh_profile" {
     mode                             = string
     internal_ingress_gateway_enabled = optional(bool, true)
     external_ingress_gateway_enabled = optional(bool, true)
+    revisions                        = list(string)
   })
   default     = null
   description = <<-EOT
     `mode` - (Required) The mode of the service mesh. Possible value is `Istio`.
     `internal_ingress_gateway_enabled` - (Optional) Is Istio Internal Ingress Gateway enabled? Defaults to `true`.
     `external_ingress_gateway_enabled` - (Optional) Is Istio External Ingress Gateway enabled? Defaults to `true`.
+    `revisions` - (Required) Specify 1 or 2 Istio control plane revisions for managing minor upgrades using the canary upgrade process. For example, create the resource with revisions set to ["asm-1-20"], or leave it empty (the revisions will only be known after apply). To start the canary upgrade, change revisions to ["asm-1-20", "asm-1-21"]. To roll back the canary upgrade, revert to ["asm-1-20"]. To confirm the upgrade, change to ["asm-1-21"].
   EOT
 }
 
@@ -286,7 +300,7 @@ variable "storage_profile" {
     enabled                     = bool
     blob_driver_enabled         = bool
     disk_driver_enabled         = bool
-    disk_driver_version         = string
+    # disk_driver_version         = string
     file_driver_enabled         = bool
     snapshot_controller_enabled = bool
   })
@@ -294,7 +308,7 @@ variable "storage_profile" {
     enabled                     = false
     blob_driver_enabled         = false
     disk_driver_enabled         = true
-    disk_driver_version         = "v1"
+    # disk_driver_version         = "v1"
     file_driver_enabled         = true
     snapshot_controller_enabled = true
   }
@@ -346,7 +360,7 @@ variable "key_vault_id" {
 
 variable "role_based_access_control" {
   type = list(object({
-    managed            = bool
+    # managed            = bool
     tenant_id          = optional(string)
     azure_rbac_enabled = bool
   }))
@@ -383,7 +397,7 @@ variable "net_profile_pod_cidr" {
   description = " (Optional) The CIDR to use for pod IP addresses. This field can only be set when network_plugin is set to kubenet. Changing this forces a new resource to be created."
 }
 
-variable "ebpf_data_plane" {
+variable "network_data_plane" {
   type        = string
   default     = null
   description = "(Optional) Specifies the eBPF data plane used for building the Kubernetes network. Possible value is `cilium`. Changing this forces a new resource to be created."
@@ -655,15 +669,15 @@ variable "auto_scaler_profile" {
   }
   description = "Auto scaler profile configuration"
 }
-variable "api_server_access_profile" {
-  type = object({
-    authorized_ip_ranges     = optional(list(string))
-    vnet_integration_enabled = optional(bool)
-    subnet_id                = optional(string)
-  })
-  default     = null
-  description = "Controlling the public and private exposure of a cluster please see the properties"
-}
+# variable "api_server_access_profile" {
+#   type = object({
+#     authorized_ip_ranges     = optional(list(string))
+#     #vnet_integration_enabled = optional(bool)
+#     #subnet_id                = optional(string)
+#   })
+#   default     = null
+#   description = "Controlling the public and private exposure of a cluster please see the properties"
+# }
 variable "local_account_disabled" {
   type        = bool
   default     = false
@@ -674,7 +688,7 @@ variable "role_based_access_control_enabled" {
   default     = true
   description = "Whether role based acces control should be enabled or not"
 }
-variable "automatic_channel_upgrade" {
+variable "automatic_upgrade_channel" {
   type        = string
   default     = null
   description = "(Optional) The upgrade channel for this Kubernetes Cluster. Possible values are `patch`, `rapid`, `node-image` and `stable`. By default automatic-upgrades are turned off. Note that you cannot specify the patch version using `kubernetes_version` or `orchestrator_version` when using the `patch` upgrade channel. See [the documentation](https://learn.microsoft.com/en-us/azure/aks/auto-upgrade-cluster) for more information"
@@ -746,20 +760,20 @@ variable "default_node_pool" {
 Default node pool configuration:
 ```
 map(object({
-    name                  = string
-    count                 = number
-    vm_size               = string
-    os_type               = string
-    availability_zones    = list(number)
-    enable_auto_scaling   = bool
-    min_count             = number
-    max_count             = number
-    type                  = string
-    vnet_subnet_id        = string
-    max_pods              = number
-    os_disk_type          = string
-    os_disk_size_gb       = number
-    enable_node_public_ip = bool
+    name                   = string
+    count                  = number
+    vm_size                = string
+    os_type                = string
+    availability_zones     = list(number)
+    auto_scaling_enabled   = bool
+    min_count              = number
+    max_count              = number
+    type                   = string
+    vnet_subnet_id         = string
+    max_pods               = number
+    os_disk_type           = string
+    os_disk_size_gb        = number
+    node_public_ip_enabled = bool
 }))
 ```
 EOD
@@ -862,6 +876,7 @@ variable "workload_runtime" {
   description = "Used to specify the workload runtime. Allowed values are OCIContainer, WasmWasi and KataMshvVmIsolation."
 }
 
+
 variable "kubelet_config" {
   type = object({
     allowed_unsafe_sysctls    = optional(list(string))
@@ -886,9 +901,52 @@ variable "outbound_nat_enabled" {
 }
 
 variable "nodes_pools" {
-  type        = list(any)
-  default     = []
-  description = "A list of nodes pools to create, each item supports same properties as `local.default_agent_profile`"
+  description = "List of node pools"
+  type = list(object({
+    name                    = string
+    max_pods                = optional(number)
+    os_disk_size_gb         = optional(number)
+    vm_size                 = string
+    count                   = optional(number)
+    node_public_ip_enabled  = optional(bool)
+    mode                    = optional(string) # Mark as optional
+    auto_scaling_enabled     = optional(bool)
+    min_count               = optional(number)
+    max_count               = optional(number)
+    os_type                 = optional(string)
+    os_disk_type            = optional(string)
+    vnet_subnet_id          = optional(string)
+    host_encryption_enabled = optional(bool)
+    orchestrator_version    = optional(string)
+    node_labels             = optional(map(string))
+    node_taints             = optional(list(string))
+    host_group_id           = optional(string)
+    priority                = optional(string) # Mark as optional
+    eviction_policy         = optional(string) # Mark as optional
+    spot_max_price          = optional(number) # Mark as optional
+  }))
+  default = [ {
+    name                    = "default"
+    max_pods                = 30
+    os_disk_size_gb         = 128
+    vm_size                 = 1
+    node_public_ip_enabled  = false
+    mode                    = "System"
+    auto_scaling_enabled    = false
+    min_count               = null
+    max_count               = null 
+    os_type                 = "Linux" 
+    os_disk_type            = "Managed"
+    vnet_subnet_id          = ""
+    host_encryption_enabled = false
+    orchestrator_version    = null
+    node_labels             = null
+    node_taints             = null
+    host_group_id           = null
+    priority                = null
+    eviction_policy         = null
+    spot_max_price          = null
+  } ]
 }
 
 
@@ -949,7 +1007,7 @@ variable "rotation_policy" {
 
 variable "expiration_date" {
   type        = string
-  default     = "2024-05-22T18:29:59Z"
+  default     = "2034-10-22T18:29:59Z"
   description = "Expiration UTC datetime (Y-m-d'T'H:M:S'Z')"
 }
 
@@ -957,6 +1015,48 @@ variable "aks_user_auth_role" {
   type        = any
   default     = []
   description = "Group and User role base access to AKS"
+}
+
+variable "flux_enable" {
+  type = bool
+  default = false
+  description = "Enable Flux integration with Azure AKS"
+}
+
+variable "flux_git_repo_url" {
+  description = "Specifies the URL to sync for the flux configuration git repository. It must start with http://, https://, git@ or ssh://."
+  type        = string
+  default     = ""
+}
+
+variable "flux_git_repo_branch" {
+  description = "Name of the branch to sync with."
+  type        = string
+  default     = "main"
+}
+
+variable "ssh_private_key_base64" {
+  description = "Specifies the Base64-encoded SSH private key in PEM format."
+  type        = string
+  default     = ""
+}
+
+variable "flux_timeout_in_seconds" {
+  type        = number
+  description = "The maximum time to attempt to reconcile the kustomization on the cluster."
+  default     = 600
+}
+
+variable "flux_sync_interval_in_seconds" {
+  type        = number
+  description = "The interval at which to re-reconcile the kustomization on the cluster."
+  default     = 600
+}
+
+variable "flux_retry_interval_in_seconds" {
+  type        = number
+  description = "The interval at which to re-reconcile the kustomization on the cluster in the event of failure on reconciliation."
+  default     = 600
 }
 
 

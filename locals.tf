@@ -16,8 +16,8 @@ locals {
     count                        = 1
     vm_size                      = "Standard_D2_v3"
     os_type                      = "Linux"
-    enable_auto_scaling          = false
-    enable_host_encryption       = false
+    auto_scaling_enabled         = false
+    host_encryption_enabled      = false
     min_count                    = null
     max_count                    = null
     type                         = "VirtualMachineScaleSets"
@@ -28,12 +28,11 @@ locals {
     os_disk_size_gb              = 128
     host_group_id                = null
     orchestrator_version         = null
-    enable_node_public_ip        = false
+    node_public_ip_enabled       = false
     mode                         = "System"
     fips_enabled                 = null
     node_labels                  = null
     only_critical_addons_enabled = null
-    orchestrator_version         = null
     proximity_placement_group_id = null
     scale_down_mode              = null
     snapshot_id                  = null
@@ -41,8 +40,15 @@ locals {
     temporary_name_for_rotation  = null
     ultra_ssd_enabled            = null
     zones                        = null
+    priority                     = null
+    eviction_policy              = null
+    spot_max_price               = null
   }
-
+  # default_spot_node_pool = {
+  #   priority              = "Spot"
+  #   eviction_policy       = "Delete"
+  #   spot_max_price        = -1
+  # }
   nodes_pools_with_defaults = [for ap in var.nodes_pools : merge(local.default_node_pool, ap)]
   nodes_pools               = [for ap in local.nodes_pools_with_defaults : ap.os_type == "Linux" ? merge(local.default_linux_node_profile, ap) : merge(local.default_windows_node_profile, ap)]
   # Defaults for Linux profile
@@ -52,6 +58,12 @@ locals {
     os_disk_size_gb = 128
   }
 
+  # default_spot_instanse = {
+  #   priority              = "Spot"
+  #   eviction_policy       = "Delete"
+  #   spot_max_price        = -1
+  # }
+
   # Defaults for Windows profile
   # Do not want to run same number of pods and some images can be quite large
   default_windows_node_profile = {
@@ -59,6 +71,14 @@ locals {
     os_disk_size_gb = 256
   }
 
+}
+
+output "nodes_pools_with_defaults" {
+  value = local.nodes_pools_with_defaults
+}
+
+output "nodes_pools" {
+  value = local.nodes_pools
 }
 
 module "labels" {

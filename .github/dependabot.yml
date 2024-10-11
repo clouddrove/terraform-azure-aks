@@ -10,10 +10,14 @@ updates:
     schedule:
       interval: "weekly"
   - package-ecosystem: "terraform" # See documentation for possible values
-    directory: "_examples/private_cluster" # Location of package manifests
+    directory: "examples/private_cluster" # Location of package manifests
     schedule:
       interval: "weekly"
   - package-ecosystem: "terraform" # See documentation for possible values
-    directory: "_examples/private_cluster" # Location of package manifests
+    directory: "examples/private_cluster" # Location of package manifests
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "terraform" # See documentation for possible values
+    directory: "examples/complete" # Location of package manifests
     schedule:
       interval: "weekly"

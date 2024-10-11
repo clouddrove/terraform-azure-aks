@@ -1,14 +1,21 @@
 provider "azurerm" {
   features {}
+  subscription_id = "068245d4-3c94-42fe-9c4d-9e5e1cabc60c"
 }
+provider "azurerm" {
+  features {}
+  alias           = "peer"
+  subscription_id = "068245d4-3c94-42fe-9c4d-9e5e1cabc60c"
+}
+
 data "azurerm_client_config" "current_client_config" {}
 
 module "resource_group" {
   source  = "clouddrove/resource-group/azure"
   version = "1.0.2"
 
-  name        = "app-public"
-  environment = "test"
+  name        = "app-1"
+  environment = "test-2"
   label_order = ["name", "environment", ]
   location    = "Canada Central"
 }
@@ -27,7 +34,7 @@ module "vnet" {
 
 module "subnet" {
   source  = "clouddrove/subnet/azure"
-  version = "1.1.0"
+  version = "1.2.0"
 
   name                 = "app"
   environment          = "test"
@@ -52,7 +59,7 @@ module "subnet" {
 
 module "log-analytics" {
   source                           = "clouddrove/log-analytics/azure"
-  version                          = "1.0.1"
+  version                          = "1.1.0"
   name                             = "app"
   environment                      = "test"
   label_order                      = ["name", "environment"]
@@ -60,12 +67,17 @@ module "log-analytics" {
   log_analytics_workspace_sku      = "PerGB2018"
   resource_group_name              = module.resource_group.resource_group_name
   log_analytics_workspace_location = module.resource_group.resource_group_location
+  log_analytics_workspace_id       = module.log-analytics.workspace_id
 }
 
 module "vault" {
   source  = "clouddrove/key-vault/azure"
-  version = "1.1.0"
-  name    = "apptest5rds4556"
+  version = "1.2.0"
+  name    = "apptest3428335"
+  providers = {
+    azurerm.dns_sub  = azurerm.peer, #change this to other alias if dns hosted in other subscription.
+    azurerm.main_sub = azurerm
+  }
   #environment         = local.environment
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
@@ -85,7 +97,7 @@ module "vault" {
   reader_objects_ids        = [data.azurerm_client_config.current_client_config.object_id]
   admin_objects_ids         = [data.azurerm_client_config.current_client_config.object_id]
   #### enable diagnostic setting
-  diagnostic_setting_enable  = false
+  diagnostic_setting_enable  = true
   log_analytics_workspace_id = module.log-analytics.workspace_id ## when diagnostic_setting_enable = true, need to add log analytics workspace id
 }
 
@@ -97,8 +109,7 @@ module "aks" {
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
 
-  kubernetes_version      = "1.27.7"
-  private_cluster_enabled = false
+  kubernetes_version = "1.28.9"
 
   default_node_pool = {
     name                  = "agentpool1"
@@ -108,6 +119,7 @@ module "aks" {
     count                 = 1
     enable_node_public_ip = false
   }
+
 
   ##### if requred more than one node group.
   nodes_pools = [
@@ -125,8 +137,7 @@ module "aks" {
   #networking
   vnet_id         = module.vnet.vnet_id
   nodes_subnet_id = module.subnet.default_subnet_id[0]
-
-  # acr_id       = "****" #pass this value if you  want aks to pull image from acr else remove it
+  # acr_id       = module.container-registry.container_registry_id #pass this value if you  want aks to pull image from acr else remove it
   key_vault_id      = module.vault.id #pass this value of variable 'cmk_enabled = true' if you want to enable Encryption with a Customer-managed key else remove it.
   admin_objects_ids = [data.azurerm_client_config.current_client_config.object_id]
 

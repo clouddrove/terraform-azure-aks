@@ -5,7 +5,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
   resource_group_name               = local.resource_group_name
   dns_prefix                        = replace(module.labels.id, "/[\\W_]/", "-")
   kubernetes_version                = var.kubernetes_version
-  automatic_channel_upgrade         = var.automatic_channel_upgrade
+  automatic_upgrade_channel         = var.automatic_upgrade_channel
   sku_tier                          = var.aks_sku_tier
   node_resource_group               = var.node_resource_group == null ? format("%s-aks-node-rg", module.labels.id) : var.node_resource_group
   disk_encryption_set_id            = var.key_vault_id != null ? azurerm_disk_encryption_set.main[0].id : null
@@ -25,7 +25,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
     name                         = local.default_node_pool.agents_pool_name
     node_count                   = local.default_node_pool.count
     vm_size                      = local.default_node_pool.vm_size
-    enable_auto_scaling          = local.default_node_pool.enable_auto_scaling
+    auto_scaling_enabled         = local.default_node_pool.auto_scaling_enabled
     min_count                    = local.default_node_pool.min_count
     max_count                    = local.default_node_pool.max_count
     max_pods                     = local.default_node_pool.max_pods
@@ -33,8 +33,8 @@ resource "azurerm_kubernetes_cluster" "aks" {
     os_disk_size_gb              = local.default_node_pool.os_disk_size_gb
     type                         = local.default_node_pool.type
     vnet_subnet_id               = local.default_node_pool.vnet_subnet_id
-    enable_host_encryption       = local.default_node_pool.enable_host_encryption
-    enable_node_public_ip        = local.default_node_pool.enable_node_public_ip
+    host_encryption_enabled      = local.default_node_pool.host_encryption_enabled
+    node_public_ip_enabled       = local.default_node_pool.node_public_ip_enabled
     fips_enabled                 = local.default_node_pool.fips_enabled
     node_labels                  = local.default_node_pool.node_labels
     only_critical_addons_enabled = local.default_node_pool.only_critical_addons_enabled
@@ -117,7 +117,9 @@ resource "azurerm_kubernetes_cluster" "aks" {
       for_each = var.agents_pool_max_surge == null ? [] : ["upgrade_settings"]
 
       content {
-        max_surge = var.agents_pool_max_surge
+        max_surge                     = var.agents_pool_max_surge
+        drain_timeout_in_minutes      = var.agents_pool_drain_timeout_in_minutes
+        node_soak_duration_in_minutes = var.agents_pool_node_soak_duration_in_minutes
       }
     }
   }
@@ -206,15 +208,15 @@ resource "azurerm_kubernetes_cluster" "aks" {
     }
   }
 
-  dynamic "api_server_access_profile" {
-    for_each = var.api_server_access_profile != null ? [1] : []
+  # dynamic "api_server_access_profile" {
+  #   for_each = var.api_server_access_profile != null ? [1] : []
 
-    content {
-      authorized_ip_ranges     = var.api_server_access_profile.authorized_ip_ranges
-      vnet_integration_enabled = var.api_server_access_profile.vnet_integration_enabled
-      subnet_id                = var.api_server_access_profile.subnet_id
-    }
-  }
+  #   content {
+  #     authorized_ip_ranges     = var.api_server_access_profile.authorized_ip_ranges
+  #     #vnet_integration_enabled = var.api_server_access_profile.vnet_integration_enabled
+  #     #subnet_id                = var.api_server_access_profile.subnet_id
+  #   }
+  # }
 
   dynamic "auto_scaler_profile" {
     for_each = var.auto_scaler_profile_enabled ? [var.auto_scaler_profile] : []
@@ -289,7 +291,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
   dynamic "azure_active_directory_role_based_access_control" {
     for_each = var.role_based_access_control == null ? [] : var.role_based_access_control
     content {
-      managed                = azure_active_directory_role_based_access_control.value.managed
+      # managed                = azure_active_directory_role_based_access_control.value.managed
       tenant_id              = azure_active_directory_role_based_access_control.value.tenant_id
       admin_group_object_ids = !azure_active_directory_role_based_access_control.value.azure_rbac_enabled ? var.admin_group_id : null
       azure_rbac_enabled     = azure_active_directory_role_based_access_control.value.azure_rbac_enabled
@@ -319,6 +321,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
       mode                             = var.service_mesh_profile.mode
       external_ingress_gateway_enabled = var.service_mesh_profile.external_ingress_gateway_enabled
       internal_ingress_gateway_enabled = var.service_mesh_profile.internal_ingress_gateway_enabled
+      revisions                        = var.service_mesh_profile.revisions
     }
   }
   dynamic "service_principal" {
@@ -333,9 +336,9 @@ resource "azurerm_kubernetes_cluster" "aks" {
     for_each = var.storage_profile_enabled ? ["storage_profile"] : []
 
     content {
-      blob_driver_enabled         = var.storage_profile.blob_driver_enabled
-      disk_driver_enabled         = var.storage_profile.disk_driver_enabled
-      disk_driver_version         = var.storage_profile.disk_driver_version
+      blob_driver_enabled = var.storage_profile.blob_driver_enabled
+      disk_driver_enabled = var.storage_profile.disk_driver_enabled
+      # disk_driver_version         = var.storage_profile.disk_driver_version
       file_driver_enabled         = var.storage_profile.file_driver_enabled
       snapshot_controller_enabled = var.storage_profile.snapshot_controller_enabled
     }
@@ -349,7 +352,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
     for_each = var.web_app_routing == null ? [] : ["web_app_routing"]
 
     content {
-      dns_zone_id = var.web_app_routing.dns_zone_id
+      dns_zone_ids = var.web_app_routing.dns_zone_id
     }
   }
 
@@ -399,7 +402,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
   network_profile {
     network_plugin      = var.network_plugin
     network_policy      = var.network_policy
-    ebpf_data_plane     = var.ebpf_data_plane
+    network_data_plane  = var.network_data_plane
     dns_service_ip      = cidrhost(var.service_cidr, 10)
     service_cidr        = var.service_cidr
     load_balancer_sku   = var.load_balancer_sku
