@@ -1,14 +1,21 @@
 provider "azurerm" {
   features {}
+  subscription_id = "000000-11111-1223-XXX-XXXXXXXXXXXX"
 }
+provider "azurerm" {
+  features {}
+  alias           = "peer"
+  subscription_id = "000000-11111-1223-XXX-XXXXXXXXXXXX"
+}
+
 data "azurerm_client_config" "current_client_config" {}
 
 module "resource_group" {
   source  = "clouddrove/resource-group/azure"
   version = "1.0.2"
 
-  name        = "app"
-  environment = "test"
+  name        = "app-1"
+  environment = "test-2"
   label_order = ["name", "environment", ]
   location    = "Canada Central"
 }
@@ -52,7 +59,7 @@ module "subnet" {
 
 module "log-analytics" {
   source                           = "clouddrove/log-analytics/azure"
-  version                          = "1.0.1"
+  version                          = "1.1.0"
   name                             = "app"
   environment                      = "test"
   label_order                      = ["name", "environment"]
@@ -60,12 +67,17 @@ module "log-analytics" {
   log_analytics_workspace_sku      = "PerGB2018"
   resource_group_name              = module.resource_group.resource_group_name
   log_analytics_workspace_location = module.resource_group.resource_group_location
+  log_analytics_workspace_id       = module.log-analytics.workspace_id
 }
 
 module "vault" {
   source  = "clouddrove/key-vault/azure"
-  version = "1.1.0"
-  name    = "apptest5rds4556"
+  version = "1.2.0"
+  name    = "apptest3428335"
+  providers = {
+    azurerm.dns_sub  = azurerm.peer, #change this to other alias if dns hosted in other subscription.
+    azurerm.main_sub = azurerm
+  }
   #environment         = local.environment
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
@@ -85,7 +97,7 @@ module "vault" {
   reader_objects_ids        = [data.azurerm_client_config.current_client_config.object_id]
   admin_objects_ids         = [data.azurerm_client_config.current_client_config.object_id]
   #### enable diagnostic setting
-  diagnostic_setting_enable  = false
+  diagnostic_setting_enable  = true
   log_analytics_workspace_id = module.log-analytics.workspace_id ## when diagnostic_setting_enable = true, need to add log analytics workspace id
 }
 
@@ -97,12 +109,13 @@ module "aks" {
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
 
-  kubernetes_version = "1.27"
+  kubernetes_version = "1.28.9"
+
   default_node_pool = {
-    name                  = "agentpool"
+    name                  = "agentpool1"
     max_pods              = 200
     os_disk_size_gb       = 64
-    vm_size               = "Standard_B2s"
+    vm_size               = "Standard_B4ms"
     count                 = 1
     enable_node_public_ip = false
   }
