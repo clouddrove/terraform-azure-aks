@@ -12,7 +12,7 @@ locals {
   private_dns_zone    = var.private_dns_zone_type == "Custom" ? var.private_dns_zone_id : var.private_dns_zone_type
   resource_group_name = var.resource_group_name
   location            = var.location
-  default_node_pool = {
+  default_agent_profile = {
     agents_pool_name             = "agentpool"
     count                        = 1
     vm_size                      = "Standard_D2_v3"
@@ -50,7 +50,8 @@ locals {
   #   eviction_policy       = "Delete"
   #   spot_max_price        = -1
   # }
-  nodes_pools_with_defaults = [for ap in var.nodes_pools : merge(local.default_node_pool, ap)]
+  default_node_pool         = merge(local.default_agent_profile, var.default_node_pool)
+  nodes_pools_with_defaults = [for ap in var.nodes_pools : merge(local.default_agent_profile, ap)]
   nodes_pools               = [for ap in local.nodes_pools_with_defaults : ap.os_type == "Linux" ? merge(local.default_linux_node_profile, ap) : merge(local.default_windows_node_profile, ap)]
   # Defaults for Linux profile
   # Generally smaller images so can run more pods and require smaller HD

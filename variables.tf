@@ -938,7 +938,7 @@ variable "nodes_pools" {
     max_count               = null
     os_type                 = "Linux"
     os_disk_type            = "Managed"
-    vnet_subnet_id          = ""
+    vnet_subnet_id          = null
     host_encryption_enabled = false
     orchestrator_version    = null
     node_labels             = null

@@ -1,11 +1,11 @@
 provider "azurerm" {
   features {}
-  subscription_id = "000000-11111-1223-XXX-XXXXXXXXXXXX"
+  subscription_id = "068245d4-3c94-42fe-9c4d-9e5e1cabc60c"
 }
 provider "azurerm" {
   features {}
   alias           = "peer"
-  subscription_id = "000000-11111-1223-XXX-XXXXXXXXXXXX"
+  subscription_id = "068245d4-3c94-42fe-9c4d-9e5e1cabc60c"
 }
 
 data "azurerm_client_config" "current_client_config" {}
@@ -112,7 +112,7 @@ module "aks" {
   private_cluster_enabled = false
 
   default_node_pool = {
-    name                   = "agentpool1"
+    name                   = "default-nodepool"
     max_pods               = 200
     os_disk_size_gb        = 64
     vm_size                = "Standard_B4ms"
@@ -126,7 +126,7 @@ module "aks" {
   ##### if requred more than one node group.
   nodes_pools = [
     {
-      name                  = "nodegroup2"
+      name                  = "nodepool2"
       max_pods              = 30
       os_disk_size_gb       = 64
       vm_size               = "Standard_B4ms"
@@ -141,7 +141,7 @@ module "aks" {
       }
     },
     {
-      name                  = "spot"
+      name                  = "spotnodepool"
       max_pods              = null
       os_disk_size_gb       = null
       vm_size               = "Standard_D2_v3"
