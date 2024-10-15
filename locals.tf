@@ -1,9 +1,4 @@
 
-## Managed By : CloudDrove
-## Copyright @ CloudDrove. All Right Reserved.
-
-## Vritual Network and Subnet Creation
-
 data "azurerm_subscription" "current" {}
 data "azurerm_client_config" "current" {}
 
@@ -45,11 +40,6 @@ locals {
     eviction_policy              = null
     spot_max_price               = null
   }
-  # default_spot_node_pool = {
-  #   priority              = "Spot"
-  #   eviction_policy       = "Delete"
-  #   spot_max_price        = -1
-  # }
   default_node_pool         = merge(local.default_agent_profile, var.default_node_pool)
   nodes_pools_with_defaults = [for ap in var.nodes_pools : merge(local.default_agent_profile, ap)]
   nodes_pools               = [for ap in local.nodes_pools_with_defaults : ap.os_type == "Linux" ? merge(local.default_linux_node_profile, ap) : merge(local.default_windows_node_profile, ap)]
@@ -59,13 +49,6 @@ locals {
     max_pods        = 30
     os_disk_size_gb = 128
   }
-
-  # default_spot_instanse = {
-  #   priority              = "Spot"
-  #   eviction_policy       = "Delete"
-  #   spot_max_price        = -1
-  # }
-
   # Defaults for Windows profile
   # Do not want to run same number of pods and some images can be quite large
   default_windows_node_profile = {

@@ -2,32 +2,30 @@
 resource "azurerm_kubernetes_cluster_node_pool" "node_pools" {
   count                         = var.enabled ? length(var.nodes_pools) : 0
   kubernetes_cluster_id         = azurerm_kubernetes_cluster.aks[0].id
-  name                          = var.nodes_pools[count.index].name
-  vm_size                       = var.nodes_pools[count.index].vm_size
-  os_type                       = var.nodes_pools[count.index].os_type
-  os_disk_type                  = var.nodes_pools[count.index].os_disk_type
-  os_disk_size_gb               = var.nodes_pools[count.index].os_disk_size_gb
-  vnet_subnet_id                = var.nodes_pools[count.index].vnet_subnet_id
-  auto_scaling_enabled          = var.nodes_pools[count.index].auto_scaling_enabled
-  host_encryption_enabled       = var.nodes_pools[count.index].host_encryption_enabled
-  node_count                    = var.nodes_pools[count.index].count
-  min_count                     = var.nodes_pools[count.index].min_count
-  max_count                     = var.nodes_pools[count.index].max_count
-  max_pods                      = var.nodes_pools[count.index].max_pods
-  node_public_ip_enabled        = var.nodes_pools[count.index].node_public_ip_enabled
-  mode                          = var.nodes_pools[count.index].mode
-  orchestrator_version          = var.nodes_pools[count.index].orchestrator_version
-  node_taints                   = var.nodes_pools[count.index].node_taints
-  host_group_id                 = var.nodes_pools[count.index].host_group_id
-  node_labels                   = var.nodes_pools[count.index].node_labels
+  name                          = local.nodes_pools[count.index].name
+  vm_size                       = local.nodes_pools[count.index].vm_size
+  os_type                       = local.nodes_pools[count.index].os_type
+  os_disk_type                  = local.nodes_pools[count.index].os_disk_type
+  os_disk_size_gb               = local.nodes_pools[count.index].os_disk_size_gb
+  vnet_subnet_id                = local.nodes_pools[count.index].vnet_subnet_id
+  auto_scaling_enabled          = local.nodes_pools[count.index].auto_scaling_enabled
+  host_encryption_enabled       = local.nodes_pools[count.index].host_encryption_enabled
+  node_count                    = local.nodes_pools[count.index].count
+  min_count                     = local.nodes_pools[count.index].min_count
+  max_count                     = local.nodes_pools[count.index].max_count
+  max_pods                      = local.nodes_pools[count.index].max_pods
+  node_public_ip_enabled        = local.nodes_pools[count.index].node_public_ip_enabled
+  mode                          = local.nodes_pools[count.index].mode
+  orchestrator_version          = local.nodes_pools[count.index].orchestrator_version
+  node_taints                   = local.nodes_pools[count.index].node_taints
+  host_group_id                 = local.nodes_pools[count.index].host_group_id
+  node_labels                   = local.nodes_pools[count.index].node_labels
   capacity_reservation_group_id = var.capacity_reservation_group_id
   workload_runtime              = var.workload_runtime
   zones                         = var.agents_availability_zones
-
-  # Add the optional spot instance attributes with conditional expressions
-  priority        = lookup(var.nodes_pools[count.index], "priority", null)
-  eviction_policy = lookup(var.nodes_pools[count.index], "eviction_policy", null)
-  spot_max_price  = lookup(var.nodes_pools[count.index], "spot_max_price", null)
+  priority                      = local.nodes_pools[count.index].priority
+  eviction_policy               = local.nodes_pools[count.index].eviction_policy
+  spot_max_price                = local.nodes_pools[count.index].spot_max_price
 
   dynamic "kubelet_config" {
     for_each = var.kubelet_config != null ? [var.kubelet_config] : []

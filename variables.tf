@@ -670,15 +670,13 @@ variable "auto_scaler_profile" {
   }
   description = "Auto scaler profile configuration"
 }
-# variable "api_server_access_profile" {
-#   type = object({
-#     authorized_ip_ranges     = optional(list(string))
-#     #vnet_integration_enabled = optional(bool)
-#     #subnet_id                = optional(string)
-#   })
-#   default     = null
-#   description = "Controlling the public and private exposure of a cluster please see the properties"
-# }
+variable "api_server_access_profile" {
+  type = object({
+    authorized_ip_ranges = optional(list(string))
+  })
+  default     = null
+  description = "Controlling the public and private exposure of a cluster please see the properties"
+}
 variable "local_account_disabled" {
   type        = bool
   default     = false

@@ -209,15 +209,12 @@ resource "azurerm_kubernetes_cluster" "aks" {
     }
   }
 
-  # dynamic "api_server_access_profile" {
-  #   for_each = var.api_server_access_profile != null ? [1] : []
-
-  #   content {
-  #     authorized_ip_ranges     = var.api_server_access_profile.authorized_ip_ranges
-  #     #vnet_integration_enabled = var.api_server_access_profile.vnet_integration_enabled
-  #     #subnet_id                = var.api_server_access_profile.subnet_id
-  #   }
-  # }
+  dynamic "api_server_access_profile" {
+    for_each = var.api_server_access_profile != null ? [1] : []
+    content {
+      authorized_ip_ranges = var.api_server_access_profile.authorized_ip_ranges
+    }
+  }
 
   dynamic "auto_scaler_profile" {
     for_each = var.auto_scaler_profile_enabled ? [var.auto_scaler_profile] : []
@@ -292,7 +289,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
   dynamic "azure_active_directory_role_based_access_control" {
     for_each = var.role_based_access_control == null ? [] : var.role_based_access_control
     content {
-      # managed                = azure_active_directory_role_based_access_control.value.managed
       tenant_id              = azure_active_directory_role_based_access_control.value.tenant_id
       admin_group_object_ids = !azure_active_directory_role_based_access_control.value.azure_rbac_enabled ? var.admin_group_id : null
       azure_rbac_enabled     = azure_active_directory_role_based_access_control.value.azure_rbac_enabled

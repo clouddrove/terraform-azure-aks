@@ -1,11 +1,11 @@
 provider "azurerm" {
   features {}
-  subscription_id = "068245d4-3c94-42fe-9c4d-9e5e1cabc60c"
+  subscription_id = "000000-11111-1223-XXX-XXXXXXXXXXXX"
 }
 provider "azurerm" {
   features {}
   alias           = "peer"
-  subscription_id = "068245d4-3c94-42fe-9c4d-9e5e1cabc60c"
+  subscription_id = "000000-11111-1223-XXX-XXXXXXXXXXXX"
 }
 
 data "azurerm_client_config" "current_client_config" {}
@@ -14,8 +14,8 @@ module "resource_group" {
   source  = "clouddrove/resource-group/azure"
   version = "1.0.2"
 
-  name        = "Public-app"
-  environment = "test"
+  name        = "Public-app1"
+  environment = "test2"
   label_order = ["name", "environment", ]
   location    = "Canada Central"
 }
@@ -24,8 +24,8 @@ module "vnet" {
   source  = "clouddrove/vnet/azure"
   version = "1.0.4"
 
-  name                = "app"
-  environment         = "test"
+  name                = "app1"
+  environment         = "test2"
   label_order         = ["name", "environment"]
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
@@ -34,10 +34,10 @@ module "vnet" {
 
 module "subnet" {
   source  = "clouddrove/subnet/azure"
-  version = "1.2.0"
+  version = "1.2.1"
 
-  name                 = "app"
-  environment          = "test"
+  name                 = "app1"
+  environment          = "test2"
   label_order          = ["name", "environment"]
   resource_group_name  = module.resource_group.resource_group_name
   location             = module.resource_group.resource_group_location
@@ -50,7 +50,7 @@ module "subnet" {
   # route_table
   routes = [
     {
-      name           = "rt-test"
+      name           = "rt_test"
       address_prefix = "0.0.0.0/0"
       next_hop_type  = "Internet"
     }
@@ -73,7 +73,7 @@ module "log-analytics" {
 module "vault" {
   source  = "clouddrove/key-vault/azure"
   version = "1.2.0"
-  name    = "vishal-012"
+  name    = "vjsn-738"
   providers = {
     azurerm.dns_sub  = azurerm.peer, #change this to other alias if dns hosted in other subscription.
     azurerm.main_sub = azurerm
@@ -103,7 +103,7 @@ module "vault" {
 
 module "aks" {
   source              = "../../"
-  name                = "app1-yum"
+  name                = "app-yum"
   environment         = "test"
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
@@ -116,7 +116,7 @@ module "aks" {
     max_pods               = 200
     os_disk_size_gb        = 64
     vm_size                = "Standard_B4ms"
-    count                  = 1
+    count                  = 3
     node_public_ip_enabled = false
     auto_scaling_enabled   = true
     min_count              = 3
@@ -126,31 +126,31 @@ module "aks" {
   ##### if requred more than one node group.
   nodes_pools = [
     {
-      name                  = "nodepool2"
-      max_pods              = 30
-      os_disk_size_gb       = 64
-      vm_size               = "Standard_B4ms"
-      count                 = 2
-      enable_node_public_ip = false
-      mode                  = "User"
-      auto_scaling_enabled  = true
-      min_count             = 3
-      max_count             = 5
+      name                   = "nodepool2"
+      max_pods               = 30
+      os_disk_size_gb        = 64
+      vm_size                = "Standard_B4ms"
+      count                  = 2
+      node_public_ip_enabled = true
+      mode                   = "User"
+      auto_scaling_enabled   = true
+      min_count              = 3
+      max_count              = 5
       node_labels = {
         "sfvfv" = "spot"
       }
     },
     {
-      name                  = "spotnodepool"
-      max_pods              = null
-      os_disk_size_gb       = null
-      vm_size               = "Standard_D2_v3"
-      count                 = 1
-      enable_node_public_ip = false
-      mode                  = null
-      auto_scaling_enabled  = true
-      min_count             = 1
-      max_count             = 1
+      name                   = "spotnodepool"
+      max_pods               = null
+      os_disk_size_gb        = null
+      vm_size                = "Standard_D2_v3"
+      count                  = 1
+      node_public_ip_enabled = false
+      mode                   = null
+      auto_scaling_enabled   = true
+      min_count              = 1
+      max_count              = 1
       node_labels = {
         "dsvdv" = "spot"
       }
