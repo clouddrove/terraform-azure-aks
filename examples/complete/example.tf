@@ -14,8 +14,8 @@ module "resource_group" {
   source  = "clouddrove/resource-group/azure"
   version = "1.0.2"
 
-  name        = "Public-app1"
-  environment = "test2"
+  name        = "Public-app"
+  environment = "test"
   label_order = ["name", "environment", ]
   location    = "Canada Central"
 }
@@ -24,8 +24,8 @@ module "vnet" {
   source  = "clouddrove/vnet/azure"
   version = "1.0.4"
 
-  name                = "app1"
-  environment         = "test2"
+  name                = "app"
+  environment         = "test"
   label_order         = ["name", "environment"]
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
@@ -36,8 +36,8 @@ module "subnet" {
   source  = "clouddrove/subnet/azure"
   version = "1.2.1"
 
-  name                 = "app1"
-  environment          = "test2"
+  name                 = "app"
+  environment          = "test"
   label_order          = ["name", "environment"]
   resource_group_name  = module.resource_group.resource_group_name
   location             = module.resource_group.resource_group_location
