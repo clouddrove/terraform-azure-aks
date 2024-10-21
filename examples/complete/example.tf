@@ -73,7 +73,7 @@ module "log-analytics" {
 module "vault" {
   source  = "clouddrove/key-vault/azure"
   version = "1.2.0"
-  name    = "vjsn-738"
+  name    = "vjsn-738112"
   providers = {
     azurerm.dns_sub  = azurerm.peer, #change this to other alias if dns hosted in other subscription.
     azurerm.main_sub = azurerm
@@ -102,11 +102,18 @@ module "vault" {
 }
 
 module "aks" {
-  source              = "../../"
-  name                = "app-yum"
-  environment         = "test"
-  resource_group_name = module.resource_group.resource_group_name
-  location            = module.resource_group.resource_group_location
+  source = "../../"
+  providers = {
+    azurerm.dns_sub  = azurerm.peer, #chagnge this to other alias if dns hosted in other subscription.
+    azurerm.main_sub = azurerm
+  }
+  name                    = "app-yum"
+  enable_private_endpoint = true
+  environment             = "test"
+  resource_group_name     = module.resource_group.resource_group_name
+  location                = module.resource_group.resource_group_location
+  virtual_network_id      = module.vnet.vnet_id
+  subnet_id               = module.subnet.default_subnet_id[0]
 
   kubernetes_version      = "1.28.9"
   private_cluster_enabled = false
@@ -181,3 +188,16 @@ output "test1" {
 output "test" {
   value = module.aks.nodes_pools
 }
+
+########Following to be uncommnented only when using DNS Zone from different subscription along with existing DNS zone.
+
+# diff_sub = true
+# alias                                         = ""
+# alias_sub                                     = ""
+
+#########Following to be uncommmented when using DNS zone from different resource group or different subscription.
+# existing_private_dns_zone                     = "privatelink.vaultcore.azure.net"
+# existing_private_dns_zone_resource_group_name = "dns-rg"
+
+#### enable diagnostic setting
+## when diagnostic_setting_enable enable,  add log analytics workspace id

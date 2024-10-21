@@ -1057,3 +1057,61 @@ variable "flux_retry_interval_in_seconds" {
   description = "The interval at which to re-reconcile the kustomization on the cluster in the event of failure on reconciliation."
   default     = 600
 }
+
+variable "addon_vent_link" {
+  type        = bool
+  default     = false
+  description = "The name of the addon vnet "
+}
+
+variable "multi_sub_vnet_link" {
+  type        = bool
+  default     = false
+  description = "Flag to control creation of vnet link for dns zone in different subscription"
+}
+
+variable "enable_private_endpoint" {
+  type        = bool
+  default     = true
+  description = "Manages a Private Endpoint to Azure database for MySQL"
+}
+
+variable "existing_private_dns_zone" {
+  type        = string
+  default     = null
+  description = "Name of the existing private DNS zone"
+}
+
+variable "diff_sub" {
+  # To be set true when hosted DNS zone is in different subnscription.
+  type        = bool
+  default     = false
+  description = "Flag to tell whether dns zone is in different sub or not."
+}
+variable "addon_virtual_network_id" {
+  type        = string
+  default     = ""
+  description = "The name of the addon vnet link vnet id"
+}
+
+variable "addon_resource_group_name" {
+  type        = string
+  default     = ""
+  description = "The name of the addon vnet resource group"
+}
+variable "subnet_id" {
+  type        = string
+  default     = ""
+  description = "The resource ID of the subnet"
+}
+variable "existing_private_dns_zone_resource_group_name" {
+  type        = string
+  default     = ""
+  description = "The name of the existing resource group"
+}
+
+variable "virtual_network_id" {
+  type        = string
+  default     = ""
+  description = "The name of the virtual network"
+}

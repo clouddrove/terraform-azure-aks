@@ -427,3 +427,157 @@ resource "azurerm_kubernetes_cluster" "aks" {
   tags = module.labels.tags
 }
 
+
+##-----------------------------------------------------------------------------
+##Below resource will deploy private endpoint for AKS.
+##-----------------------------------------------------------------------------
+resource "azurerm_private_endpoint" "pep" {
+  provider = azurerm.main_sub
+  count    = var.enabled && var.enable_private_endpoint ? 1 : 0
+
+  name                = format("%s-pe-akc", module.labels.id)
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  subnet_id           = var.subnet_id
+  tags                = module.labels.tags
+  private_service_connection {
+    name                           = format("%s-psc-akc", module.labels.id)
+    is_manual_connection           = false
+    private_connection_resource_id = azurerm_kubernetes_cluster.aks[0].id
+    subresource_names              = ["aks"]
+  }
+  lifecycle {
+    ignore_changes = [
+      tags,
+    ]
+  }
+}
+
+##----------------------------------------------------------------------------- 
+## Data block to retreive private ip of private endpoint.
+##-----------------------------------------------------------------------------
+data "azurerm_private_endpoint_connection" "private-ip" {
+  provider            = azurerm.main_sub
+  count               = var.enabled && var.enable_private_endpoint ? 1 : 0
+  name                = azurerm_private_endpoint.pep[0].name
+  resource_group_name = var.resource_group_name
+}
+
+##----------------------------------------------------------------------------- 
+## Below resource will create private dns zone in your azure subscription. 
+## Will be created only when there is no existing private dns zone and private endpoint is enabled. 
+##-----------------------------------------------------------------------------
+resource "azurerm_private_dns_zone" "dnszone" {
+  provider            = azurerm.main_sub
+  count               = var.enabled && var.existing_private_dns_zone == null && var.enable_private_endpoint ? 1 : 0
+  name                = "privatelink.kubernates.cluster.windows.net"
+  resource_group_name = var.resource_group_name
+  tags                = module.labels.tags
+}
+
+##----------------------------------------------------------------------------- 
+## Below resource will create vnet link in private dns.
+## Vnet link will be created when there is no existing private dns zone or existing private dns zone is in same subscription.  
+##-----------------------------------------------------------------------------
+resource "azurerm_private_dns_zone_virtual_network_link" "vent-link" {
+  provider = azurerm.main_sub
+  count    = var.enabled && var.enable_private_endpoint && var.diff_sub == false ? 1 : 0
+
+  name                  = var.existing_private_dns_zone == null ? format("%s-pdz-vnet-link-akc", module.labels.id) : format("%s-pdz-vnet-link-akc-1", module.labels.id)
+  resource_group_name   = local.valid_rg_name
+  private_dns_zone_name = local.private_dns_zone_name
+  virtual_network_id    = var.virtual_network_id
+  tags                  = module.labels.tags
+}
+
+##----------------------------------------------------------------------------- 
+## Below resource will create vnet link in existing private dns zone. 
+## Vnet link will be created when existing private dns zone is in different subscription. 
+##-----------------------------------------------------------------------------
+resource "azurerm_private_dns_zone_virtual_network_link" "vent-link-1" {
+  provider              = azurerm.dns_sub
+  count                 = var.enabled && var.enable_private_endpoint && var.diff_sub == true ? 1 : 0
+  name                  = var.existing_private_dns_zone == null ? format("%s-pdz-vnet-link-akc", module.labels.id) : format("%s-pdz-vnet-link-akc-1", module.labels.id)
+  resource_group_name   = local.valid_rg_name
+  private_dns_zone_name = local.private_dns_zone_name
+  virtual_network_id    = var.virtual_network_id
+  tags                  = module.labels.tags
+}
+
+##----------------------------------------------------------------------------- 
+## Below resource will create vnet link in existing private dns zone. 
+## Vnet link will be created when existing private dns zone is in different subscription. 
+## This resource is deployed when more than 1 vnet link is required and module can be called again to do so without deploying other AKS resources. 
+##-----------------------------------------------------------------------------
+resource "azurerm_private_dns_zone_virtual_network_link" "vent-link-diff-subs" {
+  provider = azurerm.dns_sub
+  count    = var.enabled && var.multi_sub_vnet_link && var.existing_private_dns_zone != null ? 1 : 0
+
+  name                  = format("%s-pdz-vnet-link-akc-1", module.labels.id)
+  resource_group_name   = var.existing_private_dns_zone_resource_group_name
+  private_dns_zone_name = var.existing_private_dns_zone
+  virtual_network_id    = var.virtual_network_id
+  tags                  = module.labels.tags
+}
+
+##----------------------------------------------------------------------------- 
+## Below resource will create vnet link in private dns zone. 
+## Below resource will be created when extra vnet link is required in dns zone in same subscription. 
+##-----------------------------------------------------------------------------
+resource "azurerm_private_dns_zone_virtual_network_link" "addon_vent_link" {
+  provider = azurerm.main_sub
+  count    = var.enabled && var.addon_vent_link ? 1 : 0
+
+  name                  = format("%s-pdz-vnet-link-akc-addon", module.labels.id)
+  resource_group_name   = var.addon_resource_group_name
+  private_dns_zone_name = var.existing_private_dns_zone == null ? azurerm_private_dns_zone.dnszone[0].name : var.existing_private_dns_zone
+  virtual_network_id    = var.addon_virtual_network_id
+  tags                  = module.labels.tags
+}
+
+##----------------------------------------------------------------------------- 
+## Below resource will create dns A record for private ip of private endpoint in private dns zone. 
+##-----------------------------------------------------------------------------
+resource "azurerm_private_dns_a_record" "arecord" {
+  provider = azurerm.main_sub
+  count    = var.enabled && var.enable_private_endpoint && var.diff_sub == false ? 1 : 0
+
+  name                = azurerm_kubernetes_cluster.aks[0].name
+  zone_name           = local.private_dns_zone_name
+  resource_group_name = local.valid_rg_name
+  ttl                 = 3600
+  records             = [data.azurerm_private_endpoint_connection.private-ip[0].private_service_connection[0].private_ip_address]
+  tags                = module.labels.tags
+  lifecycle {
+    ignore_changes = [
+      tags,
+    ]
+  }
+}
+
+##----------------------------------------------------------------------------- 
+## Below resource will create dns A record for private ip of private endpoint in private dns zone. 
+## This resource will be created when private dns is in different subscription. 
+##-----------------------------------------------------------------------------
+resource "azurerm_private_dns_a_record" "arecord-1" {
+  provider = azurerm.dns_sub
+  count    = var.enabled && var.enable_private_endpoint && var.diff_sub == true ? 1 : 0
+
+
+  name                = azurerm_kubernetes_cluster.aks[0].name
+  zone_name           = local.private_dns_zone_name
+  resource_group_name = local.valid_rg_name
+  ttl                 = 3600
+  records             = [data.azurerm_private_endpoint_connection.private-ip[0].private_service_connection[0].private_ip_address]
+  tags                = module.labels.tags
+  lifecycle {
+    ignore_changes = [
+      tags,
+    ]
+  }
+}
+
+locals {
+  valid_rg_name         = var.existing_private_dns_zone == null ? var.resource_group_name : var.existing_private_dns_zone_resource_group_name
+  private_dns_zone_name = var.enable_private_endpoint ? var.existing_private_dns_zone == null ? azurerm_private_dns_zone.dnszone[0].name : var.existing_private_dns_zone : null
+}
