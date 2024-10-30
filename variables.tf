@@ -534,7 +534,7 @@ variable "network_plugin" {
 
 variable "network_policy" {
   type        = string
-  default     = null
+  default     = "azure"
   description = " (Optional) Sets up network policy to be used with Azure CNI. Network policy allows us to control the traffic flow between pods. Currently supported values are calico and azure. Changing this forces a new resource to be created."
 }
 
