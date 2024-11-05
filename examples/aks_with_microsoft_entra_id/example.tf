@@ -1,5 +1,11 @@
 provider "azurerm" {
   features {}
+  subscription_id = "000000-11111-1223-XXX-XXXXXXXXXXXX"
+}
+provider "azurerm" {
+  features {}
+  alias           = "peer"
+  subscription_id = "000000-11111-1223-XXX-XXXXXXXXXXXX"
 }
 data "azurerm_client_config" "current_client_config" {}
 
@@ -52,7 +58,7 @@ module "subnet" {
 
 module "log-analytics" {
   source                           = "clouddrove/log-analytics/azure"
-  version                          = "1.0.1"
+  version                          = "1.1.0"
   name                             = "app"
   environment                      = "test"
   label_order                      = ["name", "environment"]
@@ -64,8 +70,12 @@ module "log-analytics" {
 
 module "vault" {
   source  = "clouddrove/key-vault/azure"
-  version = "1.1.0"
+  version = "1.2.0"
   name    = "apptestwvshaks"
+  providers = {
+    azurerm.dns_sub  = azurerm.peer, #change this to other alias if dns hosted in other subscription.
+    azurerm.main_sub = azurerm
+  }
   #environment         = local.environment
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
