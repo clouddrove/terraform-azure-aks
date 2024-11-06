@@ -1,6 +1,13 @@
 provider "azurerm" {
   features {}
+  subscription_id = "000000-11111-1223-XXX-XXXXXXXXXXXX"
 }
+provider "azurerm" {
+  features {}
+  alias           = "peer"
+  subscription_id = "000000-11111-1223-XXX-XXXXXXXXXXXX"
+}
+
 data "azurerm_client_config" "current_client_config" {}
 
 module "resource_group" {
@@ -43,7 +50,7 @@ module "subnet" {
   # route_table
   routes = [
     {
-      name           = "rt-test"
+      name           = "rt_test"
       address_prefix = "0.0.0.0/0"
       next_hop_type  = "Internet"
     }
@@ -52,7 +59,7 @@ module "subnet" {
 
 module "log-analytics" {
   source                           = "clouddrove/log-analytics/azure"
-  version                          = "1.0.1"
+  version                          = "1.1.0"
   name                             = "app"
   environment                      = "test"
   label_order                      = ["name", "environment"]
@@ -60,12 +67,17 @@ module "log-analytics" {
   log_analytics_workspace_sku      = "PerGB2018"
   resource_group_name              = module.resource_group.resource_group_name
   log_analytics_workspace_location = module.resource_group.resource_group_location
+  log_analytics_workspace_id       = module.log-analytics.workspace_id
 }
 
 module "vault" {
   source  = "clouddrove/key-vault/azure"
-  version = "1.1.0"
-  name    = "appakstest"
+  version = "1.2.0"
+  name    = "vjsn-738112"
+  providers = {
+    azurerm.dns_sub  = azurerm.peer, #change this to other alias if dns hosted in other subscription.
+    azurerm.main_sub = azurerm
+  }
   #environment         = local.environment
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
@@ -85,41 +97,73 @@ module "vault" {
   reader_objects_ids        = [data.azurerm_client_config.current_client_config.object_id]
   admin_objects_ids         = [data.azurerm_client_config.current_client_config.object_id]
   #### enable diagnostic setting
-  diagnostic_setting_enable  = false
-  log_analytics_workspace_id = module.log-analytics.workspace_id ## when diagnostic_setting_enable = true, need to add log analytics workspace id
+  diagnostic_setting_enable  = true
+  log_analytics_workspace_id = module.log-analytics.workspace_id
 }
 
 module "aks" {
-  source      = "../.."
-  name        = "app1"
-  environment = "test"
+  source = "../../"
+  providers = {
+    azurerm.dns_sub  = azurerm.peer, #chagnge this to other alias if dns hosted in other subscription.
+    azurerm.main_sub = azurerm
+  }
+  name                    = "app-yum"
+  enable_private_endpoint = true
+  environment             = "test"
+  resource_group_name     = module.resource_group.resource_group_name
+  location                = module.resource_group.resource_group_location
+  virtual_network_id      = module.vnet.vnet_id
+  subnet_id               = module.subnet.default_subnet_id[0]
 
-  resource_group_name = module.resource_group.resource_group_name
-  location            = module.resource_group.resource_group_location
-
-  kubernetes_version      = "1.27.7"
+  kubernetes_version      = "1.28.9"
   private_cluster_enabled = false
+
   default_node_pool = {
-    name                  = "agentpool1"
-    max_pods              = 200
-    os_disk_size_gb       = 64
-    vm_size               = "Standard_B4ms"
-    count                 = 1
-    enable_node_public_ip = false
-    max_surge             = "33%"
+    name                   = "default-nodepool"
+    max_pods               = 200
+    os_disk_size_gb        = 64
+    vm_size                = "Standard_B4ms"
+    count                  = 3
+    node_public_ip_enabled = false
+    auto_scaling_enabled   = true
+    min_count              = 3
+    max_count              = 5
   }
 
   ##### if requred more than one node group.
   nodes_pools = [
     {
-      name                  = "nodegroup2"
-      max_pods              = 200
-      os_disk_size_gb       = 64
-      vm_size               = "Standard_B4ms"
-      count                 = 2
-      enable_node_public_ip = false
-      mode                  = "User"
-      max_surge             = "33%"
+      name                   = "nodepool2"
+      max_pods               = 30
+      os_disk_size_gb        = 64
+      vm_size                = "Standard_B4ms"
+      count                  = 2
+      node_public_ip_enabled = true
+      mode                   = "User"
+      auto_scaling_enabled   = true
+      min_count              = 3
+      max_count              = 5
+      node_labels = {
+        "sfvfv" = "spot"
+      }
+    },
+    {
+      name                   = "spotnodepool"
+      max_pods               = null
+      os_disk_size_gb        = null
+      vm_size                = "Standard_D2_v3"
+      count                  = 1
+      node_public_ip_enabled = false
+      mode                   = null
+      auto_scaling_enabled   = true
+      min_count              = 1
+      max_count              = 1
+      node_labels = {
+        "dsvdv" = "spot"
+      }
+      priority        = "Spot"
+      eviction_policy = "Delete"
+      spot_max_price  = -1
     },
   ]
 
@@ -132,7 +176,28 @@ module "aks" {
   admin_objects_ids = [data.azurerm_client_config.current_client_config.object_id]
 
   #### enable diagnostic setting.
-  microsoft_defender_enabled = true
+  microsoft_defender_enabled = false
   diagnostic_setting_enable  = true
-  log_analytics_workspace_id = module.log-analytics.workspace_id # when diagnostic_setting_enable = true && oms_agent_enabled = true
+  log_analytics_workspace_id = module.log-analytics.workspace_id
 }
+
+output "test1" {
+  value = module.aks.nodes_pools_with_defaults
+}
+
+output "test" {
+  value = module.aks.nodes_pools
+}
+
+########Following to be uncommnented only when using DNS Zone from different subscription along with existing DNS zone.
+
+# diff_sub = true
+# alias                                         = ""
+# alias_sub                                     = ""
+
+#########Following to be uncommmented when using DNS zone from different resource group or different subscription.
+# existing_private_dns_zone                     = "privatelink.vaultcore.azure.net"
+# existing_private_dns_zone_resource_group_name = "dns-rg"
+
+#### enable diagnostic setting
+## when diagnostic_setting_enable enable,  add log analytics workspace id
