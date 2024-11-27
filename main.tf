@@ -96,7 +96,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
       vm_size                      = var.agents_size
       auto_scaling_enabled         = var.enable_auto_scaling
       host_encryption_enabled      = var.enable_host_encryption
-      node_public_ip_enabled        = var.enable_node_public_ip
+      node_public_ip_enabled       = var.enable_node_public_ip
       fips_enabled                 = var.default_node_pool_fips_enabled
       max_count                    = var.agents_max_count
       max_pods                     = var.agents_max_pods
@@ -254,7 +254,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
     for_each = var.api_server_access_profile != null ? [1] : []
 
     content {
-      authorized_ip_ranges     = var.api_server_access_profile.authorized_ip_ranges
+      authorized_ip_ranges = var.api_server_access_profile.authorized_ip_ranges
       # vnet_integration_enabled = var.api_server_access_profile.vnet_integration_enabled
       # subnet_id                = var.api_server_access_profile.subnet_id
     }
@@ -342,7 +342,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
     name                        = local.default_node_pool.name
     node_count                  = local.default_node_pool.count
     vm_size                     = local.default_node_pool.vm_size
-    auto_scaling_enabled         = local.default_node_pool.enable_auto_scaling
+    auto_scaling_enabled        = local.default_node_pool.enable_auto_scaling
     min_count                   = local.default_node_pool.min_count
     max_count                   = local.default_node_pool.max_count
     max_pods                    = local.default_node_pool.max_pods
@@ -351,7 +351,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
     type                        = local.default_node_pool.type
     vnet_subnet_id              = local.default_node_pool.vnet_subnet_id
     temporary_name_for_rotation = var.temporary_name_for_rotation
-    host_encryption_enabled      = local.default_node_pool.enable_host_encryption
+    host_encryption_enabled     = local.default_node_pool.enable_host_encryption
     dynamic "upgrade_settings" {
       for_each = local.default_node_pool.max_surge == null ? [] : ["upgrade_settings"]
 
@@ -401,8 +401,8 @@ resource "azurerm_kubernetes_cluster" "aks" {
     for_each = var.storage_profile_enabled ? ["storage_profile"] : []
 
     content {
-      blob_driver_enabled         = var.storage_profile.blob_driver_enabled
-      disk_driver_enabled         = var.storage_profile.disk_driver_enabled
+      blob_driver_enabled = var.storage_profile.blob_driver_enabled
+      disk_driver_enabled = var.storage_profile.disk_driver_enabled
       # disk_driver_version         = var.storage_profile.disk_driver_version
       file_driver_enabled         = var.storage_profile.file_driver_enabled
       snapshot_controller_enabled = var.storage_profile.snapshot_controller_enabled
@@ -512,13 +512,13 @@ resource "azurerm_kubernetes_cluster_node_pool" "node_pools" {
   os_disk_type                  = local.nodes_pools[count.index].os_disk_type
   os_disk_size_gb               = local.nodes_pools[count.index].os_disk_size_gb
   vnet_subnet_id                = local.nodes_pools[count.index].vnet_subnet_id
-  auto_scaling_enabled           = local.nodes_pools[count.index].enable_auto_scaling
-  host_encryption_enabled        = local.nodes_pools[count.index].enable_host_encryption
+  auto_scaling_enabled          = local.nodes_pools[count.index].enable_auto_scaling
+  host_encryption_enabled       = local.nodes_pools[count.index].enable_host_encryption
   node_count                    = local.nodes_pools[count.index].count
   min_count                     = local.nodes_pools[count.index].min_count
   max_count                     = local.nodes_pools[count.index].max_count
   max_pods                      = local.nodes_pools[count.index].max_pods
-  node_public_ip_enabled         = local.nodes_pools[count.index].enable_node_public_ip
+  node_public_ip_enabled        = local.nodes_pools[count.index].enable_node_public_ip
   mode                          = local.nodes_pools[count.index].mode
   orchestrator_version          = local.nodes_pools[count.index].orchestrator_version
   node_taints                   = local.nodes_pools[count.index].node_taints
@@ -873,7 +873,7 @@ resource "azurerm_monitor_diagnostic_setting" "aks-nsg" {
   }
 
   lifecycle {
-    ignore_changes = [target_resource_id,log_analytics_destination_type]
+    ignore_changes = [target_resource_id, log_analytics_destination_type]
   }
 }
 

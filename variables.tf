@@ -453,7 +453,7 @@ variable "service_mesh_profile" {
     mode                             = string
     internal_ingress_gateway_enabled = optional(bool, true)
     external_ingress_gateway_enabled = optional(bool, true)
-    revisions = list(string)
+    revisions                        = list(string)
   })
   default     = null
   description = <<-EOT
