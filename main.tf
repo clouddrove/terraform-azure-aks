@@ -74,7 +74,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
   resource_group_name               = local.resource_group_name
   dns_prefix                        = replace(module.labels.id, "/[\\W_]/", "-")
   kubernetes_version                = var.kubernetes_version
-  automatic_channel_upgrade         = var.automatic_channel_upgrade
+  automatic_upgrade_channel         = var.automatic_channel_upgrade
   sku_tier                          = var.aks_sku_tier
   node_resource_group               = var.node_resource_group == null ? format("%s-aks-node-rg", module.labels.id) : var.node_resource_group
   disk_encryption_set_id            = var.key_vault_id != null ? azurerm_disk_encryption_set.main[0].id : null
@@ -94,9 +94,9 @@ resource "azurerm_kubernetes_cluster" "aks" {
     content {
       name                         = var.agents_pool_name
       vm_size                      = var.agents_size
-      enable_auto_scaling          = var.enable_auto_scaling
-      enable_host_encryption       = var.enable_host_encryption
-      enable_node_public_ip        = var.enable_node_public_ip
+      auto_scaling_enabled         = var.enable_auto_scaling
+      host_encryption_enabled      = var.enable_host_encryption
+      node_public_ip_enabled        = var.enable_node_public_ip
       fips_enabled                 = var.default_node_pool_fips_enabled
       max_count                    = var.agents_max_count
       max_pods                     = var.agents_max_pods
@@ -255,8 +255,8 @@ resource "azurerm_kubernetes_cluster" "aks" {
 
     content {
       authorized_ip_ranges     = var.api_server_access_profile.authorized_ip_ranges
-      vnet_integration_enabled = var.api_server_access_profile.vnet_integration_enabled
-      subnet_id                = var.api_server_access_profile.subnet_id
+      # vnet_integration_enabled = var.api_server_access_profile.vnet_integration_enabled
+      # subnet_id                = var.api_server_access_profile.subnet_id
     }
   }
 
@@ -333,7 +333,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
   dynamic "azure_active_directory_role_based_access_control" {
     for_each = var.role_based_access_control == null ? [] : var.role_based_access_control
     content {
-      managed                = azure_active_directory_role_based_access_control.value.managed
       tenant_id              = azure_active_directory_role_based_access_control.value.tenant_id
       admin_group_object_ids = !azure_active_directory_role_based_access_control.value.azure_rbac_enabled ? var.admin_group_id : null
       azure_rbac_enabled     = azure_active_directory_role_based_access_control.value.azure_rbac_enabled
@@ -343,7 +342,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
     name                        = local.default_node_pool.name
     node_count                  = local.default_node_pool.count
     vm_size                     = local.default_node_pool.vm_size
-    enable_auto_scaling         = local.default_node_pool.enable_auto_scaling
+    auto_scaling_enabled         = local.default_node_pool.enable_auto_scaling
     min_count                   = local.default_node_pool.min_count
     max_count                   = local.default_node_pool.max_count
     max_pods                    = local.default_node_pool.max_pods
@@ -352,7 +351,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
     type                        = local.default_node_pool.type
     vnet_subnet_id              = local.default_node_pool.vnet_subnet_id
     temporary_name_for_rotation = var.temporary_name_for_rotation
-    enable_host_encryption      = local.default_node_pool.enable_host_encryption
+    host_encryption_enabled      = local.default_node_pool.enable_host_encryption
     dynamic "upgrade_settings" {
       for_each = local.default_node_pool.max_surge == null ? [] : ["upgrade_settings"]
 
@@ -387,6 +386,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
       mode                             = var.service_mesh_profile.mode
       external_ingress_gateway_enabled = var.service_mesh_profile.external_ingress_gateway_enabled
       internal_ingress_gateway_enabled = var.service_mesh_profile.internal_ingress_gateway_enabled
+      revisions                        = var.service_mesh_profile.internal_ingress_gateway_enabled.revisions
     }
   }
   dynamic "service_principal" {
@@ -403,7 +403,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
     content {
       blob_driver_enabled         = var.storage_profile.blob_driver_enabled
       disk_driver_enabled         = var.storage_profile.disk_driver_enabled
-      disk_driver_version         = var.storage_profile.disk_driver_version
+      # disk_driver_version         = var.storage_profile.disk_driver_version
       file_driver_enabled         = var.storage_profile.file_driver_enabled
       snapshot_controller_enabled = var.storage_profile.snapshot_controller_enabled
     }
@@ -512,13 +512,13 @@ resource "azurerm_kubernetes_cluster_node_pool" "node_pools" {
   os_disk_type                  = local.nodes_pools[count.index].os_disk_type
   os_disk_size_gb               = local.nodes_pools[count.index].os_disk_size_gb
   vnet_subnet_id                = local.nodes_pools[count.index].vnet_subnet_id
-  enable_auto_scaling           = local.nodes_pools[count.index].enable_auto_scaling
-  enable_host_encryption        = local.nodes_pools[count.index].enable_host_encryption
+  auto_scaling_enabled           = local.nodes_pools[count.index].enable_auto_scaling
+  host_encryption_enabled        = local.nodes_pools[count.index].enable_host_encryption
   node_count                    = local.nodes_pools[count.index].count
   min_count                     = local.nodes_pools[count.index].min_count
   max_count                     = local.nodes_pools[count.index].max_count
   max_pods                      = local.nodes_pools[count.index].max_pods
-  enable_node_public_ip         = local.nodes_pools[count.index].enable_node_public_ip
+  node_public_ip_enabled         = local.nodes_pools[count.index].enable_node_public_ip
   mode                          = local.nodes_pools[count.index].mode
   orchestrator_version          = local.nodes_pools[count.index].orchestrator_version
   node_taints                   = local.nodes_pools[count.index].node_taints
@@ -616,7 +616,7 @@ resource "azurerm_role_assignment" "aks_system_identity" {
   count                = var.enabled && var.cmk_enabled ? 1 : 0
   principal_id         = azurerm_kubernetes_cluster.aks[0].identity[0].principal_id
   scope                = azurerm_disk_encryption_set.main[0].id
-  role_definition_name = "Key Vault Crypto Service Encryption User"
+  role_definition_name = "Reader"
 }
 
 # Allow aks system indentiy access to ACR
@@ -796,7 +796,7 @@ resource "azurerm_monitor_diagnostic_setting" "aks_diag" {
     }
   }
   lifecycle {
-    ignore_changes = [log_analytics_destination_type]
+    ignore_changes = [target_resource_id, log_analytics_destination_type]
   }
 }
 
@@ -838,7 +838,7 @@ resource "azurerm_monitor_diagnostic_setting" "pip_aks" {
   }
 
   lifecycle {
-    ignore_changes = [log_analytics_destination_type]
+    ignore_changes = [target_resource_id, log_analytics_destination_type]
   }
 }
 
@@ -873,7 +873,7 @@ resource "azurerm_monitor_diagnostic_setting" "aks-nsg" {
   }
 
   lifecycle {
-    ignore_changes = [log_analytics_destination_type]
+    ignore_changes = [target_resource_id,log_analytics_destination_type]
   }
 }
 
@@ -908,7 +908,7 @@ resource "azurerm_monitor_diagnostic_setting" "aks-nic" {
   }
 
   lifecycle {
-    ignore_changes = [log_analytics_destination_type]
+    ignore_changes = [log_analytics_destination_type, log_analytics_destination_type]
   }
 }
 

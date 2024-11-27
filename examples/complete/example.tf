@@ -1,5 +1,6 @@
 provider "azurerm" {
   features {}
+  subscription_id = "2334-12-343-23-##-34343"
 }
 data "azurerm_client_config" "current_client_config" {}
 
@@ -7,7 +8,7 @@ module "resource_group" {
   source  = "clouddrove/resource-group/azure"
   version = "1.0.2"
 
-  name        = "Public-app"
+  name        = "aks-test"
   environment = "test"
   label_order = ["name", "environment", ]
   location    = "Canada Central"
@@ -52,7 +53,7 @@ module "subnet" {
 
 module "log-analytics" {
   source                           = "clouddrove/log-analytics/azure"
-  version                          = "1.0.1"
+  version                          = "2.0.0"
   name                             = "app"
   environment                      = "test"
   label_order                      = ["name", "environment"]
@@ -63,9 +64,13 @@ module "log-analytics" {
 }
 
 module "vault" {
+  providers = {
+    azurerm.dns_sub  = azurerm, #chagnge this to other alias if dns hosted in other subscription.
+    azurerm.main_sub = azurerm
+  }
   source  = "clouddrove/key-vault/azure"
-  version = "1.1.0"
-  name    = "appakstest"
+  version = "1.2.0"
+  name    = "appakstestcd2"
   #environment         = local.environment
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
@@ -97,7 +102,7 @@ module "aks" {
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
 
-  kubernetes_version      = "1.27.7"
+  kubernetes_version      = "1.30.5"
   private_cluster_enabled = false
   default_node_pool = {
     name                  = "agentpool1"
@@ -109,7 +114,7 @@ module "aks" {
     max_surge             = "33%"
   }
 
-  ##### if requred more than one node group.
+  ##### if required more than one node group.
   nodes_pools = [
     {
       name                  = "nodegroup2"
