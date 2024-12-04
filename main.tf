@@ -255,8 +255,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
 
     content {
       authorized_ip_ranges = var.api_server_access_profile.authorized_ip_ranges
-      # vnet_integration_enabled = var.api_server_access_profile.vnet_integration_enabled
-      # subnet_id                = var.api_server_access_profile.subnet_id
     }
   }
 
@@ -401,9 +399,8 @@ resource "azurerm_kubernetes_cluster" "aks" {
     for_each = var.storage_profile_enabled ? ["storage_profile"] : []
 
     content {
-      blob_driver_enabled = var.storage_profile.blob_driver_enabled
-      disk_driver_enabled = var.storage_profile.disk_driver_enabled
-      # disk_driver_version         = var.storage_profile.disk_driver_version
+      blob_driver_enabled         = var.storage_profile.blob_driver_enabled
+      disk_driver_enabled         = var.storage_profile.disk_driver_enabled
       file_driver_enabled         = var.storage_profile.file_driver_enabled
       snapshot_controller_enabled = var.storage_profile.snapshot_controller_enabled
     }
