@@ -1,5 +1,6 @@
 provider "azurerm" {
   features {}
+  subscription_id = "000001-11111-1223-XXX-XXXXXXXXXXXX"
 }
 
 module "aks" {
