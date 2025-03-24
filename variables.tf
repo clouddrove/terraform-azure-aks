@@ -304,6 +304,24 @@ EOT
   nullable    = false
 }
 
+variable "agents_pool_max_surge" {
+  type        = string
+  default     = "10%"
+  description = "The maximum number or percentage of nodes which will be added to the Default Node Pool size during an upgrade."
+}
+
+variable "agents_pool_node_soak_duration_in_minutes" {
+  type        = number
+  default     = 20
+  description = "(Optional) The amount of time in minutes to wait after draining a node and before reimaging and moving on to next node. Defaults to 0."
+}
+
+variable "agents_pool_drain_timeout_in_minutes" {
+  type        = number
+  default     = 30
+  description = "(Optional) The amount of time in minutes to wait on eviction of pods and graceful termination per node. This eviction wait time honors waiting on pod disruption budgets. If this time is exceeded, the upgrade fails. Unsetting this after configuring it will force a new resource to be created."
+}
+
 variable "aci_connector_linux_enabled" {
   type        = bool
   default     = false
@@ -518,7 +536,7 @@ EOT
 
 variable "log_analytics_workspace_id" {
   type        = string
-  default     = ""
+  default     = null
   description = "The ID of log analytics"
 }
 variable "msi_auth_for_monitoring_enabled" {
@@ -1054,7 +1072,17 @@ variable "local_account_disabled" {
 }
 
 variable "admin_group_id" {
-  type    = list(string)
+  type        = list(string)
+  default     = null
+  description = "admin access to AKS"
+}
+
+variable "user_aks_roles" {
+  description = "Map of role definitions to their respective admin group IDs"
+  type = map(object({
+    role_definition = string
+    principal_ids   = list(string)
+  }))
   default = null
 
 }

@@ -2,13 +2,14 @@ provider "azurerm" {
   features {}
   subscription_id = "000001-11111-1223-XXX-XXXXXXXXXXXX"
 }
+
 data "azurerm_client_config" "current_client_config" {}
 
 module "resource_group" {
   source  = "clouddrove/resource-group/azure"
   version = "1.0.2"
 
-  name        = "app-aks"
+  name        = "cdyes-aks"
   environment = "test"
   label_order = ["name", "environment", ]
   location    = "Canada Central"
@@ -70,7 +71,7 @@ module "vault" {
   }
   source  = "clouddrove/key-vault/azure"
   version = "1.2.0"
-  name    = "appakstestcd222"
+  name    = "appakstestcd2322"
   #environment         = local.environment
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
