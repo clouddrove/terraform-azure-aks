@@ -1,6 +1,6 @@
 provider "azurerm" {
   features {}
-  subscription_id = "000001-11111-1223-XXX-XXXXXXXXXXXX"
+  subscription_id = "1ac2caa4-336e-4daa-b8f1-0fbabe2d4b11"
 }
 data "azurerm_client_config" "current_client_config" {}
 
@@ -38,8 +38,9 @@ module "subnet" {
   virtual_network_name = module.vnet.vnet_name
 
   #subnet
-  subnet_names    = ["default"]
-  subnet_prefixes = ["10.30.0.0/20"]
+  subnet_names    = ["default", "subnet-appw"]
+  subnet_prefixes = ["10.30.0.0/20", "10.30.48.0/20"]
+
 
   # route_table
   routes = [
@@ -98,6 +99,7 @@ module "aks" {
   source      = "../.."
   name        = "app1"
   environment = "test"
+  depends_on  = [module.resource_group]
 
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
@@ -113,20 +115,21 @@ module "aks" {
     enable_node_public_ip = false
     max_surge             = "33%"
   }
+  gateway_id = module.application-gateway.application_gateway_id
 
   ##### if required more than one node group.
-  nodes_pools = [
-    {
-      name                  = "nodegroup2"
-      max_pods              = 200
-      os_disk_size_gb       = 64
-      vm_size               = "Standard_B4ms"
-      count                 = 2
-      enable_node_public_ip = false
-      mode                  = "User"
-      max_surge             = "33%"
-    },
-  ]
+  # nodes_pools = [
+  #   {
+  #     name                  = "nodegroup2"
+  #     max_pods              = 200
+  #     os_disk_size_gb       = 64
+  #     vm_size               = "Standard_B4ms"
+  #     count                 = 
+  #     enable_node_public_ip = false
+  #     mode                  = "User"
+  #     max_surge             = "33%"
+  #   },
+  # ]
 
   #networking
   vnet_id         = module.vnet.vnet_id
@@ -140,4 +143,88 @@ module "aks" {
   microsoft_defender_enabled = true
   diagnostic_setting_enable  = true
   log_analytics_workspace_id = module.log-analytics.workspace_id # when diagnostic_setting_enable = true && oms_agent_enabled = true
+}
+
+
+module "application-gateway" {
+  source              = "./app-gateway"
+  resource_group_name = module.resource_group.resource_group_name
+  location            = module.resource_group.resource_group_location
+  subnet_id           = module.subnet.default_subnet_id[1]
+  virtual_network_id  = module.vnet.vnet_id
+
+  sku = {
+    name     = "Standard_v2"
+    tier     = "Standard_v2"
+    capacity = 2
+  }
+
+  health_probes = [{
+    name                = "healthProbe1"
+    protocol            = "Http"
+    host                = "127.0.0.1"
+    path                = "/"
+    interval            = 30
+    timeout             = 30
+    unhealthy_threshold = 3
+    }
+  ]
+
+  #front-end settings
+  frontend_port_name             = "sappgw-feport"
+  frontend_ip_configuration_name = "sappgw-feip"
+
+  frontend_port_settings = [
+    {
+      name = "sappgw-feport-80"
+      port = 80
+    },
+    {
+      name = "sappgw-feport-443"
+      port = 443
+    }
+  ]
+
+  backend_address_pools = [
+    {
+      name         = "aks-backend-pool"
+      ip_addresses = [] # This will be managed by AGIC
+    }
+  ]
+
+  backend_http_settings = [
+    {
+      name                  = "aks-http-setting"
+      cookie_based_affinity = "Disabled"
+      path                  = "/"
+      port                  = 80
+      enable_https          = false
+      request_timeout       = 30
+      connection_draining = {
+        enable_connection_draining = true
+        drain_timeout_sec          = 300
+      }
+    }
+  ]
+
+  http_listeners = [
+    {
+      name                           = "aks-http-listener"
+      frontend_ip_configuration_name = "sappgw-feip"
+      frontend_port_name             = "sappgw-feport-80"
+      ssl_certificate_name           = null
+      host_name                      = null
+    }
+  ]
+
+  request_routing_rules = [
+    {
+      name                       = "aks-routing-rule"
+      rule_type                  = "Basic"
+      http_listener_name         = "aks-http-listener"
+      backend_address_pool_name  = "aks-backend-pool"
+      backend_http_settings_name = "aks-http-setting"
+      priority                   = 100
+    }
+  ]
 }

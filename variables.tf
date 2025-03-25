@@ -1089,7 +1089,7 @@ variable "user_aks_roles" {
 
 variable "expiration_date" {
   type        = string
-  default     = "2024-05-22T18:29:59Z"
+  default     = "2032-05-22T18:29:59Z"
   description = "Expiration UTC datetime (Y-m-d'T'H:M:S'Z')"
 }
 
@@ -1112,4 +1112,10 @@ variable "aks_user_auth_role" {
   type        = any
   default     = []
   description = "Group and User role base access to AKS"
+}
+
+variable "gateway_id" {
+  type = string
+  default = ""
+  description = "Application GateWay ID that will attach to the AKS"
 }

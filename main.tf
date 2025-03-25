@@ -6,7 +6,6 @@
 data "azurerm_subscription" "current" {}
 data "azurerm_client_config" "current" {}
 
-
 locals {
   resource_group_name = var.resource_group_name
   location            = var.location
@@ -202,6 +201,11 @@ resource "azurerm_kubernetes_cluster" "aks" {
       }
     }
   }
+
+   ingress_application_gateway {
+  gateway_id = var.gateway_id
+}
+
 
   dynamic "aci_connector_linux" {
     for_each = var.aci_connector_linux_enabled ? ["aci_connector_linux"] : []
@@ -544,6 +548,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "node_pools" {
   workload_runtime              = var.workload_runtime
   zones                         = var.agents_availability_zones
 
+  
   dynamic "kubelet_config" {
     for_each = var.kubelet_config != null ? [var.kubelet_config] : []
 
@@ -560,6 +565,8 @@ resource "azurerm_kubernetes_cluster_node_pool" "node_pools" {
       topology_manager_policy   = kubelet_config.value.topology_manager_policy
     }
   }
+  
+
 
   dynamic "linux_os_config" {
     for_each = var.agents_pool_linux_os_configs
@@ -619,6 +626,8 @@ resource "azurerm_kubernetes_cluster_node_pool" "node_pools" {
   windows_profile {
     outbound_nat_enabled = var.outbound_nat_enabled
   }
+
+
 }
 
 resource "azurerm_role_assignment" "aks_entra_id" {
@@ -710,6 +719,23 @@ resource "azurerm_role_assignment" "rbac_keyvault_crypto_officer" {
   principal_id         = each.value
 }
 
+data "azurerm_application_gateway" "appgw" {
+  name                = split("/", var.gateway_id)[8] 
+  resource_group_name = var.resource_group_name
+}
+
+resource "azurerm_role_assignment" "app_gw_role" {
+  count                = var.enabled ?  1 : 0 
+  principal_id         = data.azurerm_user_assigned_identity.appgw_uami.principal_id
+  scope                = format("/subscriptions/%s/resourceGroups/%s", data.azurerm_subscription.current.subscription_id, azurerm_kubernetes_cluster.aks[0].node_resource_group)
+  role_definition_name = "Contributor"
+}
+
+data "azurerm_user_assigned_identity" "appgw_uami" {
+  name                = split("/", data.azurerm_application_gateway.appgw.identity[0].identity_ids[0])[8]
+  resource_group_name = var.resource_group_name
+}
+
 resource "azurerm_key_vault_key" "example" {
   depends_on      = [azurerm_role_assignment.rbac_keyvault_crypto_officer]
   count           = var.enabled && var.cmk_enabled ? 1 : 0
@@ -756,6 +782,36 @@ resource "azurerm_role_assignment" "azurerm_disk_encryption_set_key_vault_access
   principal_id         = azurerm_disk_encryption_set.main[0].identity[0].principal_id
   scope                = var.key_vault_id
   role_definition_name = "Key Vault Crypto Service Encryption User"
+}
+
+resource "azurerm_role_assignment" "agic_appgw_contributor" {
+  scope                = var.gateway_id 
+  role_definition_name = "Contributor"
+  principal_id         = azurerm_kubernetes_cluster.aks[0].ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
+  depends_on           = [azurerm_kubernetes_cluster.aks]
+}
+
+resource "azurerm_role_assignment" "agic_rg_reader" {
+  scope                = data.azurerm_resource_group.appgw_rg.id
+  role_definition_name = "Reader"
+  principal_id         = azurerm_kubernetes_cluster.aks[0].ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
+  depends_on           = [azurerm_kubernetes_cluster.aks]
+}
+
+data "azurerm_resource_group" "appgw_rg" {
+  name = try(var.resource_group_name)
+}
+
+resource "azurerm_role_assignment" "appgw_identity_operator" {
+  scope                = data.azurerm_user_assigned_identity.appgw_uami.id
+  role_definition_name = "Managed Identity Operator"
+  principal_id         = azurerm_kubernetes_cluster.aks[0].ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
+}
+
+resource "azurerm_role_assignment" "appgw_subnet_join" {
+  scope                =  data.azurerm_application_gateway.appgw.gateway_ip_configuration[0].subnet_id
+  role_definition_name = "Network Contributor"
+  principal_id         = azurerm_kubernetes_cluster.aks[0].ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
 }
 
 resource "azurerm_key_vault_access_policy" "main" {
