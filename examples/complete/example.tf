@@ -1,6 +1,6 @@
 provider "azurerm" {
   features {}
-  subscription_id = "1ac2caa4-336e-4daa-b8f1-0fbabe2d4b11"
+  subscription_id = "000001-11111-1223-XXX-XXXXXXXXXXXX"
 }
 data "azurerm_client_config" "current_client_config" {}
 
