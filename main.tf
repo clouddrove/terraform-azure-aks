@@ -1,34 +1,33 @@
-## Managed By : CloudDrove
-## Copyright @ CloudDrove. All Right Reserved.
+## Managed By : hoirzon
+## Copyright @ hoirzon. All Right Reserved.
 
 ## Vritual Network and Subnet Creation
 
 data "azurerm_subscription" "current" {}
 data "azurerm_client_config" "current" {}
 
-
 locals {
   resource_group_name = var.resource_group_name
   location            = var.location
   default_agent_profile = {
-    name                   = "agentpool"
-    count                  = null
-    vm_size                = "Standard_D2_v3"
-    os_type                = "Linux"
-    enable_auto_scaling    = false
-    enable_host_encryption = true
-    min_count              = null
-    max_count              = null
-    type                   = "VirtualMachineScaleSets"
-    node_taints            = null
-    vnet_subnet_id         = var.nodes_subnet_id
-    max_pods               = 30
-    os_disk_type           = "Managed"
-    os_disk_size_gb        = 128
-    host_group_id          = null
-    orchestrator_version   = null
-    enable_node_public_ip  = false
-    mode                   = "System"
+    name                          = "agentpool"
+    count                         = 1
+    vm_size                       = "Standard_D2_v3"
+    os_type                       = "Linux"
+    enable_auto_scaling           = false
+    enable_host_encryption        = false
+    min_count                     = null
+    max_count                     = null
+    type                          = "VirtualMachineScaleSets"
+    node_taints                   = null
+    vnet_subnet_id                = var.nodes_subnet_id
+    max_pods                      = 30
+    os_disk_type                  = "Managed"
+    os_disk_size_gb               = 128
+    host_group_id                 = null
+    orchestrator_version          = null
+    enable_node_public_ip         = false
+    mode                          = "System"
     node_soak_duration_in_minutes = null
     max_surge                     = null
     drain_timeout_in_minutes      = null
@@ -203,6 +202,15 @@ resource "azurerm_kubernetes_cluster" "aks" {
     }
   }
 
+  dynamic "ingress_application_gateway" {
+    for_each = var.gateway_id == null ? [] : ["ingress_application_gateway"]
+    content {
+      gateway_id = var.gateway_id
+    }
+  }
+
+
+
   dynamic "aci_connector_linux" {
     for_each = var.aci_connector_linux_enabled ? ["aci_connector_linux"] : []
 
@@ -212,16 +220,16 @@ resource "azurerm_kubernetes_cluster" "aks" {
   }
 
 
-  dynamic "ingress_application_gateway" {
-    for_each = toset(var.ingress_application_gateway != null ? [var.ingress_application_gateway] : [])
+  # dynamic "ingress_application_gateway" {
+  #   for_each = toset(var.ingress_application_gateway != null ? [var.ingress_application_gateway] : [])
 
-    content {
-      gateway_id   = ingress_application_gateway.value.gateway_id
-      gateway_name = ingress_application_gateway.value.gateway_name
-      subnet_cidr  = ingress_application_gateway.value.subnet_cidr
-      subnet_id    = ingress_application_gateway.value.subnet_id
-    }
-  }
+  #   content {
+  #     gateway_id   = ingress_application_gateway.value.gateway_id
+  #     gateway_name = ingress_application_gateway.value.gateway_name
+  #     subnet_cidr  = ingress_application_gateway.value.subnet_cidr
+  #     subnet_id    = ingress_application_gateway.value.subnet_id
+  #   }
+  # }
 
   dynamic "key_management_service" {
     for_each = var.kms_enabled ? ["key_management_service"] : []
@@ -756,6 +764,60 @@ resource "azurerm_role_assignment" "azurerm_disk_encryption_set_key_vault_access
   principal_id         = azurerm_disk_encryption_set.main[0].identity[0].principal_id
   scope                = var.key_vault_id
   role_definition_name = "Key Vault Crypto Service Encryption User"
+}
+
+data "azurerm_application_gateway" "appgw" {
+  count               = var.enabled && var.gateway_id != null ? 1 : 0
+  name                = split("/", var.gateway_id)[8]
+  resource_group_name = var.resource_group_name
+}
+
+data "azurerm_user_assigned_identity" "appgw_uami" {
+  count               = var.enabled && var.gateway_id != null ? 1 : 0
+  name                = split("/", data.azurerm_application_gateway.appgw[0].identity[0].identity_ids[0])[8]
+  resource_group_name = var.resource_group_name
+}
+
+data "azurerm_resource_group" "appgw_rg" {
+  count = var.enabled && var.gateway_id != null ? 1 : 0
+  name  = try(var.resource_group_name)
+}
+
+resource "azurerm_role_assignment" "app_gw_role" {
+  count                = var.enabled && var.gateway_id != null ? 1 : 0
+  principal_id         = data.azurerm_user_assigned_identity.appgw_uami[0].principal_id
+  scope                = format("/subscriptions/%s/resourceGroups/%s", data.azurerm_subscription.current.subscription_id, azurerm_kubernetes_cluster.aks[0].node_resource_group)
+  role_definition_name = "Contributor"
+}
+
+resource "azurerm_role_assignment" "agic_appgw_contributor" {
+  count                = var.enabled && var.gateway_id != null ? 1 : 0
+  scope                = var.gateway_id
+  role_definition_name = "Contributor"
+  principal_id         = azurerm_kubernetes_cluster.aks[0].ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
+  depends_on           = [azurerm_kubernetes_cluster.aks]
+}
+
+resource "azurerm_role_assignment" "agic_rg_reader" {
+  count                = var.enabled && var.gateway_id != null ? 1 : 0
+  scope                = data.azurerm_resource_group.appgw_rg[0].id
+  role_definition_name = "Reader"
+  principal_id         = azurerm_kubernetes_cluster.aks[0].ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
+  depends_on           = [azurerm_kubernetes_cluster.aks]
+}
+
+resource "azurerm_role_assignment" "appgw_identity_operator" {
+  count                = var.enabled && var.gateway_id != null ? 1 : 0
+  scope                = data.azurerm_user_assigned_identity.appgw_uami[0].id
+  role_definition_name = "Managed Identity Operator"
+  principal_id         = azurerm_kubernetes_cluster.aks[0].ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
+}
+
+resource "azurerm_role_assignment" "appgw_subnet_join" {
+  count                = var.enabled && var.gateway_id != null ? 1 : 0
+  scope                = data.azurerm_application_gateway.appgw[0].gateway_ip_configuration[0].subnet_id
+  role_definition_name = "Network Contributor"
+  principal_id         = azurerm_kubernetes_cluster.aks[0].ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
 }
 
 resource "azurerm_key_vault_access_policy" "main" {
