@@ -1115,7 +1115,7 @@ variable "aks_user_auth_role" {
 }
 
 variable "gateway_id" {
-  type = string
-  default = ""
+  type        = string
+  default     = ""
   description = "Application GateWay ID that will attach to the AKS"
 }
