@@ -767,31 +767,31 @@ resource "azurerm_role_assignment" "azurerm_disk_encryption_set_key_vault_access
 }
 
 data "azurerm_application_gateway" "appgw" {
-  count               = var.enabled && var.gateway_id != null ? 1 : 0
+  count               = var.enabled && var.gateway_enabled ? 1 : 0
   name                = split("/", var.gateway_id)[8]
   resource_group_name = var.resource_group_name
 }
 
 data "azurerm_user_assigned_identity" "appgw_uami" {
-  count               = var.enabled && var.gateway_id != null ? 1 : 0
+  count               = var.enabled && var.gateway_enabled ? 1 : 0
   name                = split("/", data.azurerm_application_gateway.appgw[0].identity[0].identity_ids[0])[8]
   resource_group_name = var.resource_group_name
 }
 
-data "azurerm_resource_group" "appgw_rg" {
-  count = var.enabled && var.gateway_id != null ? 1 : 0
-  name  = try(var.resource_group_name)
-}
+# data "azurerm_resource_group" "appgw_rg" {
+#   count = var.enabled && var.gateway_id != null ? 1 : 0
+#   name  = try(var.resource_group_name)
+# }
 
 resource "azurerm_role_assignment" "app_gw_role" {
-  count                = var.enabled && var.gateway_id != null ? 1 : 0
+  count                = var.enabled && var.gateway_enabled ? 1 : 0
   principal_id         = data.azurerm_user_assigned_identity.appgw_uami[0].principal_id
   scope                = format("/subscriptions/%s/resourceGroups/%s", data.azurerm_subscription.current.subscription_id, azurerm_kubernetes_cluster.aks[0].node_resource_group)
   role_definition_name = "Contributor"
 }
 
 resource "azurerm_role_assignment" "agic_appgw_contributor" {
-  count                = var.enabled && var.gateway_id != null ? 1 : 0
+  count                = var.enabled && var.gateway_enabled ? 1 : 0
   scope                = var.gateway_id
   role_definition_name = "Contributor"
   principal_id         = azurerm_kubernetes_cluster.aks[0].ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
@@ -799,22 +799,22 @@ resource "azurerm_role_assignment" "agic_appgw_contributor" {
 }
 
 resource "azurerm_role_assignment" "agic_rg_reader" {
-  count                = var.enabled && var.gateway_id != null ? 1 : 0
-  scope                = data.azurerm_resource_group.appgw_rg[0].id
+  count                = var.enabled && var.gateway_enabled ? 1 : 0
+  scope                = format("/subscriptions/%s/resourceGroups/%s", data.azurerm_subscription.current.subscription_id, var.resource_group_name)
   role_definition_name = "Reader"
   principal_id         = azurerm_kubernetes_cluster.aks[0].ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
   depends_on           = [azurerm_kubernetes_cluster.aks]
 }
 
 resource "azurerm_role_assignment" "appgw_identity_operator" {
-  count                = var.enabled && var.gateway_id != null ? 1 : 0
+  count                = var.enabled && var.gateway_enabled ? 1 : 0
   scope                = data.azurerm_user_assigned_identity.appgw_uami[0].id
   role_definition_name = "Managed Identity Operator"
   principal_id         = azurerm_kubernetes_cluster.aks[0].ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
 }
 
 resource "azurerm_role_assignment" "appgw_subnet_join" {
-  count                = var.enabled && var.gateway_id != null ? 1 : 0
+  count                = var.enabled && var.gateway_enabled ? 1 : 0
   scope                = data.azurerm_application_gateway.appgw[0].gateway_ip_configuration[0].subnet_id
   role_definition_name = "Network Contributor"
   principal_id         = azurerm_kubernetes_cluster.aks[0].ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id

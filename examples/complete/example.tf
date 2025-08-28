@@ -1,7 +1,8 @@
 provider "azurerm" {
   features {}
-  subscription_id = "000001-11111-1223-XXX-XXXXXXXXXXXX"
+  # subscription_id = "000001-11111-1223-XXX-XXXXXXXXXXXX"
 }
+
 data "azurerm_client_config" "current_client_config" {}
 
 module "resource_group" {
@@ -147,7 +148,7 @@ module "aks" {
 
 
 module "application-gateway" {
-  source              = "./app-gateway"
+  source              = "github.com/clouddrove/terraform-azure-application-gateway?ref=master"
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
   subnet_id           = module.subnet.default_subnet_id[1]
@@ -156,7 +157,7 @@ module "application-gateway" {
   sku = {
     name     = "Standard_v2"
     tier     = "Standard_v2"
-    capacity = 2
+    capacity = 1
   }
 
   health_probes = [{
@@ -171,7 +172,7 @@ module "application-gateway" {
   ]
 
   #front-end settings
-  frontend_port_name             = "sappgw-feport"
+  # frontend_port_name             = "sappgw-feport-80"
   frontend_ip_configuration_name = "sappgw-feip"
 
   frontend_port_settings = [

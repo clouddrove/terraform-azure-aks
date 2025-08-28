@@ -1119,3 +1119,9 @@ variable "gateway_id" {
   default     = ""
   description = "Application GateWay ID that will attach to the AKS"
 }
+
+variable "gateway_enabled" {
+  type        = bool
+  default     = true
+  description = "To create Application gateway role assignments"
+}
