@@ -1,12 +1,39 @@
-## what
-* Describe high-level what changed as a result of these commits (i.e. in plain-english, what do these changes mean?)
-* Use bullet points to be concise and to the point.
+## Description
 
-## why
-* Provide the justifications for the changes (e.g. business case).
-* Describe why these changes were made (e.g. why do these commits fix the problem?)
-* Use bullet points to be concise and to the point.
+<!--
+🎉 Thank you for your contribution!
 
-## references
-* Link to any supporting jira issues or helpful documentation to add some context (e.g. stackoverflow).
-* Use `closes #123`, if this PR closes a Jira issue `#123`
+Please provide a brief summary of the changes in this pull request, including:
+- A short description of what the PR does
+- The reason or motivation for the change
+- Relevant issue references, e.g., Fixes #123 or Closes #456
+- Any context that helps reviewers understand the impact or use case
+- Dependencies introduced, if any
+- Screenshots or logs, if applicable (e.g., UI changes or test outputs)
+-->
+
+Fixes # 
+
+Closes # 
+
+---
+
+## Type of Change
+
+<!-- Use the check-boxes [x] on the options that are relevant. -->
+
+- [ ] Feature
+- [ ] Feature (Breaking Change)
+- [ ] Fix
+- [ ] Fix (Breaking Change)
+- [ ] CI/CD
+- [ ] Documentation
+- [ ] Other (please specify):
+
+---
+
+## Checklist
+
+- [ ] I have reviewed open pull requests to avoid duplication of work
+- [ ] All relevant pipelines or checks pass successfully
+- [ ] I have added or updated documentation if applicable
