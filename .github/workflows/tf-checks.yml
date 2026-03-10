@@ -5,23 +5,38 @@ on:
   pull_request:
   workflow_dispatch:
 jobs:
-  basic-example:
-    uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.1
-    with:
-      working_directory: './examples/basic/'
-  complete-example:
-    uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.1
-    with:
-      working_directory: './examples/complete/'    
   private_cluster-example:
     uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.1
     with:
       working_directory: './examples/private_cluster/'
+  
   public_cluster-example:
     uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.1
     with:
       working_directory: './examples/public_cluster/'
+  
   aks_with_microsoft_entra_id-example:
     uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.1
     with:
-      working_directory: './examples/aks_with_microsoft_entra_id/'    
+      working_directory: './examples/aks_with_microsoft_entra_id/'
+  
+  aks_with_ingress_controller-example:
+    uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.1
+    with:
+      working_directory: './examples/aks_with_ingress_controller/'
+  
+  aks_with_backup_enabled-example:
+    uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.1
+    with:
+      working_directory: './examples/aks_with_backup_enabled/'
+  
+  complete-example:
+    uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.1
+    with:
+      working_directory: './examples/complete/'
+
+  # TFLint Job
+  tf-lint:
+    uses: clouddrove/github-shared-workflows/.github/workflows/tf-lint.yml@master
+    secrets:
+      GITHUB: ${{ secrets.GITHUB }}

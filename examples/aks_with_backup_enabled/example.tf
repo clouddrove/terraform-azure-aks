@@ -19,6 +19,15 @@ module "resource_group" {
   label_order = ["name", "environment", "location"]
 }
 
+module "snapshot_resource_group" {
+  source      = "terraform-az-modules/resource-group/azurerm"
+  version     = "1.0.3"
+  name        = "snapshot"
+  environment = "dev"
+  location    = "eastus"
+  label_order = ["name", "environment", "location"]
+}
+
 ##-----------------------------------------------------------------------------
 ## Virtual Network
 ##-----------------------------------------------------------------------------
@@ -80,13 +89,32 @@ module "private_dns_zone" {
   label_order         = ["name", "environment", "location"]
   private_dns_config = [
     {
-      resource_type = "key_vault"
+      resource_type = "azure_kubernetes"
       vnet_ids      = [module.vnet.vnet_id]
     },
     {
-      resource_type = "azure_kubernetes"
+      resource_type = "key_vault"
       vnet_ids      = [module.vnet.vnet_id]
     }
+  ]
+}
+
+##-----------------------------------------------------------------------------
+## Storage Account
+##-----------------------------------------------------------------------------
+module "storage" {
+  source                        = "terraform-az-modules/storage/azurerm"
+  version                       = "1.0.0"
+  name                          = "core"
+  environment                   = "qa"
+  label_order                   = ["name", "environment", "location"]
+  resource_group_name           = module.resource_group.resource_group_name
+  location                      = module.resource_group.resource_group_location
+  public_network_access_enabled = true
+  account_kind                  = "StorageV2"
+  account_tier                  = "Standard"
+  containers_list = [
+    { name = "snapshot", access_type = "private" },
   ]
 }
 
@@ -124,48 +152,41 @@ module "vault" {
 ## Azure Kubernetes Service (AKS)
 ##-----------------------------------------------------------------------------
 module "aks" {
-  source                = "../../"
-  name                  = "core"
-  environment           = "dev"
-  resource_group_name   = module.resource_group.resource_group_name
-  location              = module.resource_group.resource_group_location
-  private_dns_zone_id   = module.private_dns_zone.private_dns_zone_ids.azure_kubernetes
-  private_dns_zone_type = "Custom"
-  vnet_id               = module.vnet.vnet_id
+  source                  = "../../"
+  name                    = "core"
+  environment             = "dev"
+  resource_group_name     = module.resource_group.resource_group_name
+  location                = module.resource_group.resource_group_location
+  private_dns_zone_id     = module.private_dns_zone.private_dns_zone_ids.azure_kubernetes
+  private_cluster_enabled = true
+  enable_backup           = true
+  retention_rules         = []
+  default_retention_rules = {
+    default = {
+      duration        = "P14D"
+      data_store_type = "OperationalStore"
+    }
+  }
+  backup_datasource_parameters = {
+    included_namespaces              = ["default"]
+    volume_snapshot_enabled          = true
+    cluster_scoped_resources_enabled = true
+  }
+  backup_storage_account_name  = module.storage.storage_account_name
+  backup_container_name        = keys(module.storage.containers)[0]
+  snapshot_resource_group_name = module.snapshot_resource_group.resource_group_name
+  snapshot_resource_group_id   = module.snapshot_resource_group.resource_group_id
+  backup_storage_account_id    = module.storage.storage_account_id
+  vnet_id                      = module.vnet.vnet_id
   default_node_pool_config = {
-    enable_auto_scaling = true
+    enable_auto_scaling = false
     vnet_subnet_id      = module.subnet.subnet_ids.subnet1
-    max_count           = 2
-    min_count           = 1
+    os_disk_type        = "Ephemeral"
+    os_disk_size_gb     = 32
   }
-  node_pools = {
-    user = {
-      vnet_subnet_id      = module.subnet.subnet_ids.subnet1
-      enable_auto_scaling = true
-    }
-  }
-  key_vault_id                 = module.vault.id
-  admin_objects_ids            = [data.azurerm_client_config.current_client_config.object_id]
-  microsoft_defender_enabled   = false
-  diagnostic_setting_enable    = false
-  enable_extensions            = true
-  enable_fleet_manager         = true
-  enable_fleet_update_strategy = true
-  enable_fleet_update_run      = true
-  configuration_settings = {
-    "helm-controller.enabled"   = "true"
-    "source-controller.enabled" = "true"
-  }
-  fleet_member_group = "production"
-  fleet_update_strategy_stages = [
-    {
-      name                        = "stage-1"
-      groups                      = ["production"]
-      after_stage_wait_in_seconds = 0
-    }
-  ]
-
-  fleet_upgrade_type               = "Full"
-  fleet_upgrade_kubernetes_version = "1.34.0"
-  fleet_node_image_selection_type  = "Latest"
+  key_vault_id               = module.vault.id
+  admin_objects_ids          = [data.azurerm_client_config.current_client_config.object_id]
+  microsoft_defender_enabled = false
+  diagnostic_setting_enable  = false
+  log_analytics_workspace_id = module.log-analytics.workspace_id
 }
