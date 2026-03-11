@@ -1260,7 +1260,7 @@ variable "cmk_enabled" {
 
 variable "cmk_key_type" {
   type        = string
-  default     = "RSA-HSM"
+  default     = "RSA"
   description = "Key type (e.g., RSA, EC)."
 }
 
